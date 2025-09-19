@@ -1,0 +1,389 @@
+"use client"
+
+import { useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Checkbox } from "@/components/ui/checkbox"
+import { TaskModal } from "@/components/task-modal"
+import {
+  ArrowLeft,
+  Edit,
+  MoreHorizontal,
+  Plus,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Trash2,
+  BarChart3,
+  ExternalLink,
+} from "lucide-react"
+import { mockProjects, mockTasks } from "@/lib/mock-data"
+import { format } from "date-fns"
+import { useToast } from "@/hooks/use-toast"
+import type { Task } from "@/lib/types"
+
+export default function ProjectDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { toast } = useToast()
+  const projectId = params.id as string
+
+  const project = mockProjects.find((p) => p.id === projectId)
+  const [tasks, setTasks] = useState(mockTasks.filter((task) => task.project_id === projectId))
+  const [taskFilter, setTaskFilter] = useState("all")
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
+
+  if (!project) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Project not found</h1>
+        <p className="text-muted-foreground mb-6">The project you're looking for doesn't exist.</p>
+        <Link href="/projects">
+          <Button>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Projects
+          </Button>
+        </Link>
+      </div>
+    )
+  }
+
+  const completedTasks = tasks.filter((task) => task.status === "done")
+  const inProgressTasks = tasks.filter((task) => task.status === "in_progress")
+  const todoTasks = tasks.filter((task) => task.status === "todo")
+  const progress = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+      case "done":
+        return "completed"
+      case "in_progress":
+        return "in-progress"
+      case "planning":
+      case "todo":
+        return "planning"
+      default:
+        return "archived"
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "high"
+      case "medium":
+        return "medium"
+      default:
+        return "low"
+    }
+  }
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return <AlertCircle className="h-4 w-4" />
+      case "medium":
+        return <Clock className="h-4 w-4" />
+      default:
+        return <CheckCircle2 className="h-4 w-4" />
+    }
+  }
+
+  const handleTaskStatusChange = (taskId: string, checked: boolean) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? { ...task, status: checked ? "done" : "todo", updated_at: new Date().toISOString() }
+          : task,
+      ),
+    )
+    toast({
+      title: checked ? "Task completed" : "Task reopened",
+      description: "Task status updated successfully.",
+    })
+  }
+
+  const handleDeleteTask = (taskId: string, taskTitle: string) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId))
+    toast({
+      title: "Task deleted",
+      description: `"${taskTitle}" has been deleted successfully.`,
+    })
+  }
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task)
+    setIsTaskModalOpen(true)
+  }
+
+  const handleCreateTask = () => {
+    setEditingTask(undefined)
+    setIsTaskModalOpen(true)
+  }
+
+  const handleSaveTask = (taskData: Partial<Task>) => {
+    if (editingTask) {
+      // Update existing task
+      setTasks((prevTasks) => prevTasks.map((task) => (task.id === editingTask.id ? { ...task, ...taskData } : task)))
+    } else {
+      // Create new task
+      const newTask = taskData as Task
+      setTasks((prevTasks) => [...prevTasks, newTask])
+    }
+  }
+
+  const filteredTasks = tasks.filter((task) => {
+    if (taskFilter === "all") return true
+    return task.status === taskFilter
+  })
+
+  return (
+    <div className="space-y-8">
+      {/* Breadcrumb */}
+      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <Link href="/dashboard" className="hover:text-foreground transition-colors">
+          Dashboard
+        </Link>
+        <span>/</span>
+        <Link href="/projects" className="hover:text-foreground transition-colors">
+          Projects
+        </Link>
+        <span>/</span>
+        <span className="text-foreground">{project.name}</span>
+      </div>
+
+      {/* Project Header */}
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-3">
+            <Link href="/projects">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
+            <Badge variant={getStatusColor(project.status)}>{project.status.replace("_", " ")}</Badge>
+          </div>
+          <p className="text-muted-foreground max-w-2xl">{project.description}</p>
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+            <span>Created {format(new Date(project.created_at), "MMM d, yyyy")}</span>
+            <span>•</span>
+            <span>Updated {format(new Date(project.updated_at), "MMM d, yyyy")}</span>
+            {project.due_date && (
+              <>
+                <span>•</span>
+                <div className="flex items-center">
+                  <Calendar className="mr-1 h-4 w-4" />
+                  Due {format(new Date(project.due_date), "MMM d, yyyy")}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Link href={`/projects/${project.id}/edit`}>
+            <Button variant="outline">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem>
+                <Plus className="mr-2 h-4 w-4" />
+                Duplicate Project
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Project Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{tasks.length}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{completedTasks.length}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{inProgressTasks.length}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Progress</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{Math.round(progress)}%</div>
+            <Progress value={progress} className="mt-2 h-2" />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-border/50">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Tasks</CardTitle>
+            <CardDescription>Manage and track project tasks</CardDescription>
+          </div>
+          <Button onClick={handleCreateTask}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Task
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={taskFilter} onValueChange={setTaskFilter} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="all">All ({tasks.length})</TabsTrigger>
+              <TabsTrigger value="todo">To Do ({todoTasks.length})</TabsTrigger>
+              <TabsTrigger value="in_progress">In Progress ({inProgressTasks.length})</TabsTrigger>
+              <TabsTrigger value="done">Done ({completedTasks.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value={taskFilter} className="mt-6">
+              {filteredTasks.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex items-center space-x-4 p-4 border border-border/50 rounded-lg hover:border-primary/50 transition-colors"
+                    >
+                      <Checkbox
+                        checked={task.status === "done"}
+                        onCheckedChange={(checked) => handleTaskStatusChange(task.id, checked as boolean)}
+                      />
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <Link href={`/tasks/${task.id}`} className="hover:underline">
+                            <h4
+                              className={`font-medium ${task.status === "done" ? "line-through text-muted-foreground" : "text-foreground"}`}
+                            >
+                              {task.title}
+                            </h4>
+                          </Link>
+                          <Badge variant={getPriorityColor(task.priority)} className="text-xs">
+                            {task.priority}
+                          </Badge>
+                          <Badge variant={getStatusColor(task.status)} className="text-xs">
+                            {task.status.replace("_", " ")}
+                          </Badge>
+                        </div>
+                        {task.description && <p className="text-sm text-muted-foreground">{task.description}</p>}
+                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                          <span>Created {format(new Date(task.created_at), "MMM d")}</span>
+                          {task.due_date && (
+                            <div className="flex items-center">
+                              <Calendar className="mr-1 h-3 w-3" />
+                              Due {format(new Date(task.due_date), "MMM d")}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Link href={`/tasks/${task.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Task
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteTask(task.id, task.title)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No tasks found</h3>
+                  <p className="text-muted-foreground mb-6">
+                    {taskFilter === "all"
+                      ? "Get started by adding your first task."
+                      : `No tasks with status "${taskFilter.replace("_", " ")}" found.`}
+                  </p>
+                  <Button onClick={handleCreateTask}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Task
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      <TaskModal
+        open={isTaskModalOpen}
+        onOpenChange={setIsTaskModalOpen}
+        task={editingTask}
+        projectId={projectId}
+        projects={mockProjects}
+        onSave={handleSaveTask}
+      />
+    </div>
+  )
+}
