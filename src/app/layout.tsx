@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
+import { NextAuthProvider } from "@/contexts/sessionProvider";
 
 export const metadata: Metadata = {
   title: "ProjectFlow - Modern Project Management",
@@ -30,7 +31,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <NextAuthProvider>{children}</NextAuthProvider>
           </ThemeProvider>
         </Suspense>
         <Analytics />
