@@ -78,7 +78,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link href="/" className="inline-flex items-center space-x-2 mb-6">
+          <Link href="/public" className="inline-flex items-center space-x-2 mb-6">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
