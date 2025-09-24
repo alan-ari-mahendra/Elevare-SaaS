@@ -33,7 +33,12 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt", // biar gak perlu Session table
+    strategy: "jwt",
+    maxAge: 60 * 60 * 24,
+    updateAge: 60 * 60 * 12,
+  },
+  jwt: {
+    maxAge: 60 * 60 * 24,
   },
   callbacks: {
     async jwt({ token, user }) {

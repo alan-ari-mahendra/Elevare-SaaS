@@ -1,8 +1,8 @@
-"use client"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -12,26 +12,33 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { BarChart3, Home, FolderOpen, CheckSquare, Settings, LogOut } from "lucide-react"
-import { mockUser } from "@/lib/mock-data"
+} from "@/components/ui/sidebar";
+import {
+  BarChart3,
+  Home,
+  FolderOpen,
+  CheckSquare,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import { mockUser } from "@/lib/mock-data";
+import { signOut } from "next-auth/react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Projects", href: "/projects", icon: FolderOpen },
   { name: "Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Settings", href: "/settings", icon: Settings },
-]
+];
 
 export function AppSidebar() {
-  const pathname = usePathname()
-  const { state, toggleSidebar } = useSidebar()
+  const pathname = usePathname();
+  const { state, toggleSidebar } = useSidebar();
 
   const handleLogout = () => {
-    console.log("Logging out...")
-    // Redirect to login page
-    window.location.href = "/login"
-  }
+    signOut();
+    // window.location.href = "/login";
+  };
 
   return (
     <Sidebar className="border-r border-border/40">
@@ -40,7 +47,11 @@ export function AppSidebar() {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <BarChart3 className="h-5 w-5 text-primary-foreground" />
           </div>
-          {state === "expanded" && <span className="text-xl font-bold text-foreground">ProjectFlow</span>}
+          {state === "expanded" && (
+            <span className="text-xl font-bold text-foreground">
+              ProjectFlow
+            </span>
+          )}
         </div>
       </SidebarHeader>
 
@@ -48,7 +59,11 @@ export function AppSidebar() {
         <SidebarMenu>
           {navigation.map((item) => (
             <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton asChild isActive={pathname === item.href} className="w-full justify-start">
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                className="w-full justify-start"
+              >
                 <Link href={item.href} className="flex items-center space-x-3">
                   <item.icon className="h-5 w-5" />
                   {state === "expanded" && <span>{item.name}</span>}
@@ -64,7 +79,10 @@ export function AppSidebar() {
           {state === "expanded" && (
             <div className="flex items-center space-x-3 px-2 py-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={mockUser.avatar_url || "/placeholder.svg"} alt={mockUser.name} />
+                <AvatarImage
+                  src={mockUser.avatar_url || "/placeholder.svg"}
+                  alt={mockUser.name}
+                />
                 <AvatarFallback>
                   {mockUser.name
                     .split(" ")
@@ -73,8 +91,12 @@ export function AppSidebar() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{mockUser.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{mockUser.email}</p>
+                <p className="text-sm font-medium text-foreground truncate">
+                  {mockUser.name}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {mockUser.email}
+                </p>
               </div>
             </div>
           )}
@@ -90,5 +112,5 @@ export function AppSidebar() {
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
