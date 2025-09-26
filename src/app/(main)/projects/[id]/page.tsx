@@ -1,13 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +21,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Checkbox } from "@/components/ui/checkbox"
-import { TaskModal } from "@/components/task-modal"
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TaskModal } from "@/components/task-modal";
 import {
   ArrowLeft,
   Edit,
@@ -30,29 +36,161 @@ import {
   Trash2,
   BarChart3,
   ExternalLink,
-} from "lucide-react"
-import { mockProjects, mockTasks } from "@/lib/mock-data"
-import { format } from "date-fns"
-import { useToast } from "@/hooks/use-toast"
-import type { Task } from "@/lib/types"
+} from "lucide-react";
+import { mockProjects, mockTasks } from "@/lib/mock-data";
+import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { Project, Task } from "@prisma/client";
 
 export default function ProjectDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const { toast } = useToast()
-  const projectId = params.id as string
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const projectId = params.id as string;
+  const [project, setProject] = useState<Project | null>(null);
 
-  const project = mockProjects.find((p) => p.id === projectId)
-  const [tasks, setTasks] = useState(mockTasks.filter((task) => task.project_id === projectId))
-  const [taskFilter, setTaskFilter] = useState("all")
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskFilter, setTaskFilter] = useState("all");
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+
+  const completedTasks = tasks.filter((task) => task.status === "done");
+  const inProgressTasks = tasks.filter((task) => task.status === "in_progress");
+  const todoTasks = tasks.filter((task) => task.status === "todo");
+  const progress =
+    tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+      case "done":
+        return "completed";
+      case "in_progress":
+        return "in-progress";
+      case "planning":
+      case "todo":
+        return "planning";
+      default:
+        return "archived";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "high";
+      case "medium":
+        return "medium";
+      default:
+        return "low";
+    }
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return <AlertCircle className="h-4 w-4" />;
+      case "medium":
+        return <Clock className="h-4 w-4" />;
+      default:
+        return <CheckCircle2 className="h-4 w-4" />;
+    }
+  };
+
+  const handleTaskStatusChange = (taskId: string, checked: boolean) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              status: checked ? "done" : "todo",
+              updated_at: new Date().toISOString(),
+            }
+          : task
+      )
+    );
+    toast({
+      title: checked ? "Task completed" : "Task reopened",
+      description: "Task status updated successfully.",
+    });
+  };
+
+  const handleDeleteTask = (taskId: string, taskTitle: string) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+    toast({
+      title: "Task deleted",
+      description: `"${taskTitle}" has been deleted successfully.`,
+    });
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCreateTask = () => {
+    setEditingTask(undefined);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleSaveTask = (taskData: Partial<Task>) => {
+    if (editingTask) {
+      // Update existing task
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === editingTask.id ? { ...task, ...taskData } : task
+        )
+      );
+    } else {
+      // Create new task
+      const newTask = taskData as Task;
+      setTasks((prevTasks) => [...prevTasks, newTask]);
+    }
+  };
+
+  const filteredTasks = tasks.filter((task) => {
+    if (taskFilter === "all") return true;
+    return task.status === taskFilter;
+  });
+
+  const getProject = useCallback(async () => {
+    try {
+      const responseProject = await fetch(`/api/projects/${projectId}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!responseProject.ok)
+        throw new Error(`HTTP error! status: ${responseProject.status}`);
+
+      const project = await responseProject.json();
+
+      setProject(project);
+      const responseTask = await fetch(`/api/tasks`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!responseTask.ok)
+        throw new Error(`HTTP error! status: ${responseTask.status}`);
+
+      const tasks = await responseTask.json();
+
+      setTasks(tasks.filter((task: Task) => task.projectId === projectId));
+    } catch (error) {}
+  }, []);
+
+  useEffect(() => {
+    getProject();
+  }, [getProject]);
 
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Project not found</h1>
-        <p className="text-muted-foreground mb-6">The project you're looking for doesn't exist.</p>
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Project not found
+        </h1>
+        <p className="text-muted-foreground mb-6">
+          The project you're looking for doesn't exist.
+        </p>
         <Link href="/projects">
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -60,108 +198,24 @@ export default function ProjectDetailPage() {
           </Button>
         </Link>
       </div>
-    )
+    );
   }
-
-  const completedTasks = tasks.filter((task) => task.status === "done")
-  const inProgressTasks = tasks.filter((task) => task.status === "in_progress")
-  const todoTasks = tasks.filter((task) => task.status === "todo")
-  const progress = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-      case "done":
-        return "completed"
-      case "in_progress":
-        return "in-progress"
-      case "planning":
-      case "todo":
-        return "planning"
-      default:
-        return "archived"
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "high"
-      case "medium":
-        return "medium"
-      default:
-        return "low"
-    }
-  }
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return <AlertCircle className="h-4 w-4" />
-      case "medium":
-        return <Clock className="h-4 w-4" />
-      default:
-        return <CheckCircle2 className="h-4 w-4" />
-    }
-  }
-
-  const handleTaskStatusChange = (taskId: string, checked: boolean) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId
-          ? { ...task, status: checked ? "done" : "todo", updated_at: new Date().toISOString() }
-          : task,
-      ),
-    )
-    toast({
-      title: checked ? "Task completed" : "Task reopened",
-      description: "Task status updated successfully.",
-    })
-  }
-
-  const handleDeleteTask = (taskId: string, taskTitle: string) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId))
-    toast({
-      title: "Task deleted",
-      description: `"${taskTitle}" has been deleted successfully.`,
-    })
-  }
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task)
-    setIsTaskModalOpen(true)
-  }
-
-  const handleCreateTask = () => {
-    setEditingTask(undefined)
-    setIsTaskModalOpen(true)
-  }
-
-  const handleSaveTask = (taskData: Partial<Task>) => {
-    if (editingTask) {
-      // Update existing task
-      setTasks((prevTasks) => prevTasks.map((task) => (task.id === editingTask.id ? { ...task, ...taskData } : task)))
-    } else {
-      // Create new task
-      const newTask = taskData as Task
-      setTasks((prevTasks) => [...prevTasks, newTask])
-    }
-  }
-
-  const filteredTasks = tasks.filter((task) => {
-    if (taskFilter === "all") return true
-    return task.status === taskFilter
-  })
 
   return (
     <div className="space-y-8">
       {/* Breadcrumb */}
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link href="/dashboard" className="hover:text-foreground transition-colors">
+        <Link
+          href="/dashboard"
+          className="hover:text-foreground transition-colors"
+        >
           Dashboard
         </Link>
         <span>/</span>
-        <Link href="/projects" className="hover:text-foreground transition-colors">
+        <Link
+          href="/projects"
+          className="hover:text-foreground transition-colors"
+        >
           Projects
         </Link>
         <span>/</span>
@@ -177,20 +231,31 @@ export default function ProjectDetailPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
-            <Badge variant={getStatusColor(project.status)}>{project.status.replace("_", " ")}</Badge>
+            <h1 className="text-3xl font-bold text-foreground">
+              {project.name}
+            </h1>
+            <Badge variant={getStatusColor(project.status)}>
+              {project.status.replace("_", " ")}
+            </Badge>
           </div>
-          <p className="text-muted-foreground max-w-2xl">{project.description}</p>
+          <p className="text-muted-foreground max-w-2xl">
+            {project.description}
+          </p>
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <span>Created {format(new Date(project.created_at), "MMM d, yyyy")}</span>
+            <span>
+              Created {format(new Date(project.createdAt), "MMM d, yyyy")}
+            </span>
             <span>•</span>
-            <span>Updated {format(new Date(project.updated_at), "MMM d, yyyy")}</span>
-            {project.due_date && (
+            <span>
+              Updated {format(new Date(project.updatedAt), "MMM d, yyyy")}
+            </span>
+            {project.startDate && (
               <>
                 <span>•</span>
                 <div className="flex items-center">
                   <Calendar className="mr-1 h-4 w-4" />
-                  Due {format(new Date(project.due_date), "MMM d, yyyy")}
+                  Start Date{" "}
+                  {format(new Date(project.startDate), "MMM d, yyyy")}
                 </div>
               </>
             )}
@@ -278,12 +343,20 @@ export default function ProjectDetailPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <Tabs value={taskFilter} onValueChange={setTaskFilter} className="w-full">
+          <Tabs
+            value={taskFilter}
+            onValueChange={setTaskFilter}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="all">All ({tasks.length})</TabsTrigger>
               <TabsTrigger value="todo">To Do ({todoTasks.length})</TabsTrigger>
-              <TabsTrigger value="in_progress">In Progress ({inProgressTasks.length})</TabsTrigger>
-              <TabsTrigger value="done">Done ({completedTasks.length})</TabsTrigger>
+              <TabsTrigger value="in_progress">
+                In Progress ({inProgressTasks.length})
+              </TabsTrigger>
+              <TabsTrigger value="done">
+                Done ({completedTasks.length})
+              </TabsTrigger>
             </TabsList>
             <TabsContent value={taskFilter} className="mt-6">
               {filteredTasks.length > 0 ? (
@@ -295,31 +368,52 @@ export default function ProjectDetailPage() {
                     >
                       <Checkbox
                         checked={task.status === "done"}
-                        onCheckedChange={(checked) => handleTaskStatusChange(task.id, checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleTaskStatusChange(task.id, checked as boolean)
+                        }
                       />
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center space-x-2">
-                          <Link href={`/tasks/${task.id}`} className="hover:underline">
+                          <Link
+                            href={`/tasks/${task.id}`}
+                            className="hover:underline"
+                          >
                             <h4
-                              className={`font-medium ${task.status === "done" ? "line-through text-muted-foreground" : "text-foreground"}`}
+                              className={`font-medium ${
+                                task.status === "done"
+                                  ? "line-through text-muted-foreground"
+                                  : "text-foreground"
+                              }`}
                             >
                               {task.title}
                             </h4>
                           </Link>
-                          <Badge variant={getPriorityColor(task.priority)} className="text-xs">
+                          <Badge
+                            variant={getPriorityColor(task.priority)}
+                            className="text-xs"
+                          >
                             {task.priority}
                           </Badge>
-                          <Badge variant={getStatusColor(task.status)} className="text-xs">
+                          <Badge
+                            variant={getStatusColor(task.status)}
+                            className="text-xs"
+                          >
                             {task.status.replace("_", " ")}
                           </Badge>
                         </div>
-                        {task.description && <p className="text-sm text-muted-foreground">{task.description}</p>}
+                        {task.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {task.description}
+                          </p>
+                        )}
                         <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                          <span>Created {format(new Date(task.created_at), "MMM d")}</span>
-                          {task.due_date && (
+                          <span>
+                            Created {format(new Date(task.createdAt), "MMM d")}
+                          </span>
+                          {task.dueDate && (
                             <div className="flex items-center">
                               <Calendar className="mr-1 h-3 w-3" />
-                              Due {format(new Date(task.due_date), "MMM d")}
+                              Due {format(new Date(task.dueDate), "MMM d")}
                             </div>
                           )}
                         </div>
@@ -338,13 +432,17 @@ export default function ProjectDetailPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                            <DropdownMenuItem
+                              onClick={() => handleEditTask(task)}
+                            >
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Task
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleDeleteTask(task.id, task.title)}
+                              onClick={() =>
+                                handleDeleteTask(task.id, task.title)
+                              }
                               className="text-destructive focus:text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -359,11 +457,16 @@ export default function ProjectDetailPage() {
               ) : (
                 <div className="text-center py-8">
                   <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">No tasks found</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    No tasks found
+                  </h3>
                   <p className="text-muted-foreground mb-6">
                     {taskFilter === "all"
                       ? "Get started by adding your first task."
-                      : `No tasks with status "${taskFilter.replace("_", " ")}" found.`}
+                      : `No tasks with status "${taskFilter.replace(
+                          "_",
+                          " "
+                        )}" found.`}
                   </p>
                   <Button onClick={handleCreateTask}>
                     <Plus className="mr-2 h-4 w-4" />
@@ -385,5 +488,5 @@ export default function ProjectDetailPage() {
         onSave={handleSaveTask}
       />
     </div>
-  )
+  );
 }
