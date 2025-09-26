@@ -4,12 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Dialog,
   DialogContent,
@@ -18,12 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { CalendarIcon, Save } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
+import { Save } from "lucide-react"
+
 import { useToast } from "@/hooks/use-toast"
-import type { Task, Project } from "@/lib/types"
+import type { Project } from "@/lib/types"
 import {TaskForm} from "@/components/task-form";
+import {Task} from "@prisma/client";
 
 interface TaskModalProps {
   open: boolean
@@ -43,8 +37,8 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
     description: task?.description || "",
     status: task?.status || "todo",
     priority: task?.priority || "medium",
-    due_date: task?.due_date ? new Date(task.due_date) : undefined,
-    project_id: task?.project_id || projectId,
+    dueDate: task?.dueDate ? new Date(task.dueDate) : undefined,
+    projectId: task?.projectId || projectId,
   })
 
   const handleInputChange = (field: string, value: string | Date | undefined) => {
@@ -52,7 +46,7 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
   }
 
   const handleDateSelect = (date: Date | undefined) => {
-    handleInputChange("due_date", date)
+    handleInputChange("dueDate", date)
     setDatePickerOpen(false)
   }
 
@@ -75,8 +69,8 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
           description: formData.description,
           status: formData.status,
           priority: formData.priority,
-          dueDate: formData.due_date ? formData.due_date.toISOString() : null,
-          projectId: formData.project_id
+          dueDate: formData.dueDate ? formData.dueDate.toISOString() : null,
+          projectId: formData.projectId
         }),
       });
 
@@ -90,8 +84,8 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
       // Transform data untuk sesuai dengan tipe Task
       const taskData = {
         ...savedTask,
-        due_date: savedTask.dueDate,
-        project_id: savedTask.projectId,
+        dueDate: savedTask.dueDate,
+        projectId: savedTask.projectId,
         user_id: savedTask.userId,
         created_at: savedTask.createdAt,
         updated_at: savedTask.updatedAt,
@@ -112,8 +106,8 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
           description: "",
           status: "todo",
           priority: "medium",
-          due_date: undefined,
-          project_id: projectId,
+          dueDate: undefined,
+          projectId: projectId,
         });
       }
     } catch (error) {
