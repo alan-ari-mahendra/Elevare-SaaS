@@ -23,6 +23,7 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Task, Project } from "@/lib/types"
+import {TaskForm} from "@/components/task-form";
 
 interface TaskModalProps {
   open: boolean
@@ -36,6 +37,7 @@ interface TaskModalProps {
 export function TaskModal({ open, onOpenChange, task, projectId, projects, onSave }: TaskModalProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
   const [formData, setFormData] = useState({
     title: task?.title || "",
     description: task?.description || "",
@@ -49,30 +51,61 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const handleDateSelect = (date: Date | undefined) => {
+    handleInputChange("due_date", date)
+    setDatePickerOpen(false)
+  }
 
-    // Simulate API call
-    setTimeout(() => {
-      const taskData = {
-        ...formData,
-        due_date: formData.due_date?.toISOString(),
-        id: task?.id || `task-${Date.now()}`,
-        user_id: "1",
-        created_at: task?.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    console.log("Form submitted with data:", {formData})
+    try {
+      const apiUrl = task ? `/api/tasks/${task.id}` : "/api/tasks";
+      const method = task ? "PUT" : "POST";
+
+      const response = await fetch(apiUrl, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          status: formData.status,
+          priority: formData.priority,
+          dueDate: formData.due_date ? formData.due_date.toISOString() : null,
+          projectId: formData.project_id
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      onSave(taskData)
+      const savedTask = await response.json();
+
+      // Transform data untuk sesuai dengan tipe Task
+      const taskData = {
+        ...savedTask,
+        due_date: savedTask.dueDate,
+        project_id: savedTask.projectId,
+        user_id: savedTask.userId,
+        created_at: savedTask.createdAt,
+        updated_at: savedTask.updatedAt,
+      };
+
+      onSave(taskData);
+
       toast({
         title: task ? "Task updated" : "Task created",
         description: `"${formData.title}" has been ${task ? "updated" : "created"} successfully.`,
-      })
-      onOpenChange(false)
-      setIsLoading(false)
+      });
 
-      // Reset form if creating new task
+      onOpenChange(false);
+
       if (!task) {
         setFormData({
           title: "",
@@ -81,10 +114,19 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
           priority: "medium",
           due_date: undefined,
           project_id: projectId,
-        })
+        });
       }
-    }, 1000)
-  }
+    } catch (error) {
+      console.error("Error saving task:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save task. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const statusOptions = [
     { value: "todo", label: "To Do" },
@@ -99,137 +141,39 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
   ]
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{task ? "Edit Task" : "Create New Task"}</DialogTitle>
-            <DialogDescription>
-              {task ? "Update the task details below." : "Add a new task to your project."}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px] overflow-visible">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{task ? "Edit Task" : "Create New Task"}</DialogTitle>
+              <DialogDescription>
+                {task ? "Update the task details below." : "Add a new task to your project."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Task Title *</Label>
-              <Input
-                id="title"
-                placeholder="Enter task title"
-                value={formData.title}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                required
-              />
-            </div>
+            <TaskForm formData={formData} projects={projects} onChange={handleInputChange} />
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe the task details"
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="grid gap-4 grid-cols-2">
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorityOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Project</Label>
-              <Select value={formData.project_id} onValueChange={(value) => handleInputChange("project_id", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select project" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Due Date (Optional)</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.due_date && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.due_date ? format(formData.due_date, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.due_date}
-                    onSelect={(date) => handleInputChange("due_date", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading || !formData.title.trim()}>
-              {isLoading ? (
-                task ? (
-                  "Updating..."
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading || !formData.title.trim()}>
+                {isLoading ? (
+                    task ? (
+                        "Updating..."
+                    ) : (
+                        "Creating..."
+                    )
                 ) : (
-                  "Creating..."
-                )
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  {task ? "Update Task" : "Create Task"}
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      {task ? "Update Task" : "Create Task"}
+                    </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
   )
 }
