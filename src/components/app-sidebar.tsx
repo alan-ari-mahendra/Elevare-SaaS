@@ -36,7 +36,8 @@ export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
 
   const handleLogout = () => {
-    signOut();
+    // signOut();
+    console.log("Logging out...");
     // window.location.href = "/login";
   };
 

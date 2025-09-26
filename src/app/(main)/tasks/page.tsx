@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -29,13 +29,15 @@ import {
   AlertCircle,
   BarChart3,
 } from "lucide-react"
-import { mockProjects, mockTasks } from "@/lib/mock-data"
+import { mockProjects } from "@/lib/mock-data"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 import type { Task } from "@/lib/types"
+import {Label} from "@/components/ui/label";
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState(mockTasks)
+  const [tasks, setTasks] = useState<Task[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
@@ -44,6 +46,51 @@ export default function TasksPage() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
   const { toast } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchTasks = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch("/api/tasks", { method: "GET", credentials: "include" })
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+
+      const data = await response.json()
+
+      const transformedTasks = data.map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        due_date: task.dueDate,
+        project_id: task.projectId,
+        user_id: task.userId,
+        created_at: task.createdAt,
+        updated_at: task.updatedAt,
+      }))
+
+      setTasks(transformedTasks)
+    } catch (err) {
+      console.error("Error fetching tasks:", err)
+      setError(err instanceof Error ? err.message : "Failed to fetch tasks")
+      toast({
+        title: "Error",
+        description: "Failed to load tasks. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load tasks on component mount
+  useEffect(() => {
+    fetchTasks()
+    console.log("Tasks loaded from API:", tasks)
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -80,27 +127,79 @@ export default function TasksPage() {
     }
   }
 
-  const handleTaskStatusChange = (taskId: string, checked: boolean) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId
-          ? { ...task, status: checked ? "done" : "todo", updated_at: new Date().toISOString() }
-          : task,
-      ),
-    )
-    toast({
-      title: checked ? "Task completed" : "Task reopened",
-      description: "Task status updated successfully.",
-    })
-  }
+  const handleTaskStatusChange = async (taskId: string, checked: boolean) => {
+    try {
+      const newStatus = checked ? "done" : "todo";
 
-  const handleDeleteTask = (taskId: string, taskTitle: string) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId))
-    toast({
-      title: "Task deleted",
-      description: `"${taskTitle}" has been deleted successfully.`,
-    })
-  }
+      // Update di API
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          status: newStatus,
+          // Kirim data lain yang diperlukan untuk update
+          title: tasks.find(t => t.id === taskId)?.title || "",
+          description: tasks.find(t => t.id === taskId)?.description || "",
+          priority: tasks.find(t => t.id === taskId)?.priority || "medium",
+          dueDate: tasks.find(t => t.id === taskId)?.due_date,
+          projectId: tasks.find(t => t.id === taskId)?.project_id || ""
+        }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      // Update state lokal
+      setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+              task.id === taskId
+                  ? { ...task, status: newStatus, updated_at: new Date().toISOString() }
+                  : task,
+          ),
+      );
+
+      toast({
+        title: checked ? "Task completed" : "Task reopened",
+        description: "Task status updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string, taskTitle: string) => {
+    try {
+      // Hapus dari API
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      // Update state lokal
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+
+      toast({
+        title: "Task deleted",
+        description: `"${taskTitle}" has been deleted successfully.`,
+      });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task)
@@ -112,16 +211,67 @@ export default function TasksPage() {
     setIsTaskModalOpen(true)
   }
 
-  const handleSaveTask = (taskData: Partial<Task>) => {
-    if (editingTask) {
-      // Update existing task
-      setTasks((prevTasks) => prevTasks.map((task) => (task.id === editingTask.id ? { ...task, ...taskData } : task)))
-    } else {
-      // Create new task
-      const newTask = taskData as Task
-      setTasks((prevTasks) => [...prevTasks, newTask])
+  const handleSaveTask = async (taskData: Partial<Task>) => {
+    try {
+      let response;
+
+      if (editingTask) {
+        // Update existing task
+        response = await fetch(`/api/tasks/${editingTask.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            title: taskData.title,
+            description: taskData.description,
+            status: taskData.status,
+            priority: taskData.priority,
+            dueDate: taskData.due_date,
+            projectId: taskData.project_id
+          }),
+        });
+      } else {
+        // Create new task
+        response = await fetch("/api/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            title: taskData.title,
+            description: taskData.description,
+            status: taskData.status,
+            priority: taskData.priority,
+            dueDate: taskData.due_date,
+            projectId: taskData.project_id
+          }),
+        });
+      }
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      const savedTask = await response.json();
+
+      // Update state lokal
+      if (editingTask) {
+        setTasks((prevTasks) =>
+            prevTasks.map((task) => (task.id === editingTask.id ? { ...task, ...savedTask } : task))
+        );
+      } else {
+        setTasks((prevTasks) => [...prevTasks, savedTask]);
+      }
+    } catch (error) {
+      console.error("Error saving task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save task. Please try again.",
+        variant: "destructive",
+      });
     }
-  }
+  };
 
   // Filter and sort tasks
   const filteredTasks = tasks
