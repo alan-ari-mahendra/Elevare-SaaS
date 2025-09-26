@@ -32,9 +32,10 @@ import {
 import { mockProjects } from "@/lib/mock-data"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
-import type { Task } from "@/lib/types"
+
 import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
+import {Task} from "@prisma/client";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -65,11 +66,11 @@ export default function TasksPage() {
         description: task.description,
         status: task.status,
         priority: task.priority,
-        due_date: task.dueDate,
-        project_id: task.projectId,
+        dueDate: task.dueDate,
+        projectId: task.projectId,
         user_id: task.userId,
-        created_at: task.createdAt,
-        updated_at: task.updatedAt,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
       }))
 
       setTasks(transformedTasks)
@@ -144,8 +145,8 @@ export default function TasksPage() {
           title: tasks.find(t => t.id === taskId)?.title || "",
           description: tasks.find(t => t.id === taskId)?.description || "",
           priority: tasks.find(t => t.id === taskId)?.priority || "medium",
-          dueDate: tasks.find(t => t.id === taskId)?.due_date,
-          projectId: tasks.find(t => t.id === taskId)?.project_id || ""
+          dueDate: tasks.find(t => t.id === taskId)?.dueDate,
+          projectId: tasks.find(t => t.id === taskId)?.projectId || ""
         }),
       });
 
@@ -155,7 +156,7 @@ export default function TasksPage() {
       setTasks((prevTasks) =>
           prevTasks.map((task) =>
               task.id === taskId
-                  ? { ...task, status: newStatus, updated_at: new Date().toISOString() }
+                  ? { ...task, status: newStatus, updatedAt: new Date().toISOString() }
                   : task,
           ),
       );
@@ -228,8 +229,8 @@ export default function TasksPage() {
             description: taskData.description,
             status: taskData.status,
             priority: taskData.priority,
-            dueDate: taskData.due_date,
-            projectId: taskData.project_id
+            dueDate: taskData.dueDate,
+            projectId: taskData.projectId
           }),
         });
       } else {
@@ -245,8 +246,8 @@ export default function TasksPage() {
             description: taskData.description,
             status: taskData.status,
             priority: taskData.priority,
-            dueDate: taskData.due_date,
-            projectId: taskData.project_id
+            dueDate: taskData.dueDate,
+            projectId: taskData.projectId
           }),
         });
       }
@@ -281,7 +282,7 @@ export default function TasksPage() {
         (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
       const matchesStatus = statusFilter === "all" || task.status === statusFilter
       const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter
-      const matchesProject = projectFilter === "all" || task.project_id === projectFilter
+      const matchesProject = projectFilter === "all" || task.projectId === projectFilter
       return matchesSearch && matchesStatus && matchesPriority && matchesProject
     })
     .sort((a, b) => {
@@ -296,15 +297,15 @@ export default function TasksPage() {
             priorityOrder[b.priority as keyof typeof priorityOrder] -
             priorityOrder[a.priority as keyof typeof priorityOrder]
           )
-        case "due_date":
-          if (!a.due_date && !b.due_date) return 0
-          if (!a.due_date) return 1
-          if (!b.due_date) return -1
-          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+        case "dueDate":
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
         case "created":
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         default: // updated
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       }
     })
 
@@ -422,7 +423,7 @@ export default function TasksPage() {
                 <SelectContent>
                   <SelectItem value="updated">Last Updated</SelectItem>
                   <SelectItem value="created">Date Created</SelectItem>
-                  <SelectItem value="due_date">Due Date</SelectItem>
+                  <SelectItem value="dueDate">Due Date</SelectItem>
                   <SelectItem value="priority">Priority</SelectItem>
                   <SelectItem value="title">Title</SelectItem>
                   <SelectItem value="status">Status</SelectItem>
@@ -437,7 +438,7 @@ export default function TasksPage() {
       {filteredTasks.length > 0 ? (
         <div className="space-y-4">
           {filteredTasks.map((task) => {
-            const project = mockProjects.find((p) => p.id === task.project_id)
+            const project = mockProjects.find((p) => p.id === task.projectId)
             return (
               <Card key={task.id} className="border-border/50 hover:border-primary/50 transition-colors">
                 <CardContent className="p-6">
@@ -468,13 +469,13 @@ export default function TasksPage() {
                           {project?.name}
                         </Link>
                         <span>•</span>
-                        <span>Updated {format(new Date(task.updated_at), "MMM d")}</span>
-                        {task.due_date && (
+                        <span>Updated {format(new Date(task.updatedAt), "MMM d")}</span>
+                        {task.dueDate && (
                           <>
                             <span>•</span>
                             <div className="flex items-center">
                               <Calendar className="mr-1 h-3 w-3" />
-                              Due {format(new Date(task.due_date), "MMM d")}
+                              Due {format(new Date(task.dueDate), "MMM d")}
                             </div>
                           </>
                         )}

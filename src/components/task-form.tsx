@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-import type { Task, Project } from "@/lib/types"
+import type {  Project } from "@/lib/types"
 
 interface TaskFormProps {
     formData: {
@@ -19,8 +19,8 @@ interface TaskFormProps {
         description: string
         status: string
         priority: string
-        due_date?: Date
-        project_id: string
+        dueDate?: Date
+        projectId: string
     }
     projects: Project[]
     onChange: (field: string, value: string | Date | undefined) => void
@@ -101,7 +101,7 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
 
             <div className="space-y-2">
                 <Label>Project</Label>
-                <Select value={formData.project_id} onValueChange={(value) => onChange("project_id", value)}>
+                <Select value={formData.projectId} onValueChange={(value) => onChange("projectId", value)}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select project" />
                     </SelectTrigger>
@@ -129,11 +129,11 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
                             }}
                             className={cn(
                                 "w-full justify-start text-left font-normal",
-                                !formData.due_date && "text-muted-foreground",
+                                !formData.dueDate && "text-muted-foreground",
                             )}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.due_date ? format(formData.due_date, "PPP") : "Pick a date"}
+                            {formData.dueDate ? format(formData.dueDate, "PPP") : "Pick a date"}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent
@@ -144,8 +144,8 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
                     >
                         <Calendar
                             mode="single"
-                            selected={formData.due_date}
-                            onSelect={(date) => onChange("due_date", date)}
+                            selected={formData.dueDate}
+                            onSelect={(date) => onChange("dueDate", date)}
                             initialFocus
                             disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         />
