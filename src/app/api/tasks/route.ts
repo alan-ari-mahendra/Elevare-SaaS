@@ -12,7 +12,7 @@ export async function GET() {
 
   const tasks = await prisma.task.findMany({
     where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ position: "asc" }, { createdAt: "desc" }],
   });
 
   return NextResponse.json(tasks);
@@ -47,6 +47,16 @@ export async function POST(req: Request) {
         { status: 404 }
       );
     }
+    const lastTask = await prisma.task.findFirst({
+      where: {
+        projectId,
+        userId: session.user.id,
+      },
+      orderBy: {
+        position: "desc",
+      },
+    });
+    const nextPosition = (lastTask?.position ?? 0) + 1;
     const task = await prisma.task.create({
       data: {
         title,
@@ -56,6 +66,7 @@ export async function POST(req: Request) {
         dueDate: dueDate ? new Date(dueDate) : null,
         projectId,
         userId: session.user.id,
+        position: nextPosition,
       },
     });
     console.log("Created task:", task);
