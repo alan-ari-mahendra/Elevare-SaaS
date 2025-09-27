@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {GripVertical, MoreHorizontal, Edit, Trash2, Calendar} from "lucide-react";
 import {format} from "date-fns";
+import Link from "next/link";
 
 export function SortableTaskCard({task, isReorderMode, onStatusChange, onEdit, onDelete}) {
     const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
@@ -75,13 +76,17 @@ export function SortableTaskCard({task, isReorderMode, onStatusChange, onEdit, o
                         )}
                         <div className="flex-1 space-y-2">
                             <div className="flex items-center space-x-2">
-                                <h3 className={`font-semibold ${
-                                    task.status === "done"
-                                        ? "line-through text-muted-foreground"
-                                        : "text-foreground"
-                                }`}>
-                                    {task.title}
-                                </h3>
+                                <Link href={`/tasks/${task.id}`} className="hover:underline">
+                                    <h3
+                                        className={`font-semibold ${
+                                            task.status === "done"
+                                                ? "line-through text-muted-foreground"
+                                                : "text-foreground"
+                                        }`}
+                                    >
+                                        {task.title}
+                                    </h3>
+                                </Link>
                                 <Badge
                                     variant={getPriorityColor(task.priority)}
                                     className="text-xs"
