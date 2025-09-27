@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React, {useEffect} from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -40,7 +40,27 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
     dueDate: task?.dueDate ? new Date(task.dueDate) : undefined,
     projectId: task?.projectId || projectId,
   })
-
+  useEffect(() => {
+    if (task) {
+      setFormData({
+        title: task.title,
+        description: task.description || "",
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+        projectId: task.projectId,
+      })
+    } else {
+      setFormData({
+        title: "",
+        description: "",
+        status: "todo",
+        priority: "medium",
+        dueDate: undefined,
+        projectId: projectId,
+      })
+    }
+  }, [task, projectId, open])
   const handleInputChange = (field: string, value: string | Date | undefined) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
@@ -81,7 +101,6 @@ export function TaskModal({ open, onOpenChange, task, projectId, projects, onSav
 
       const savedTask = await response.json();
 
-      // Transform data untuk sesuai dengan tipe Task
       const taskData = {
         ...savedTask,
         dueDate: savedTask.dueDate,

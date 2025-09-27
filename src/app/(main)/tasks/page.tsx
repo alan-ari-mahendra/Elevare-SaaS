@@ -29,13 +29,27 @@ import {
   AlertCircle,
   BarChart3,
 } from "lucide-react"
-import { mockProjects } from "@/lib/mock-data"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
-
-import {Label} from "@/components/ui/label";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Task} from "@prisma/client";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import {
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -49,7 +63,16 @@ export default function TasksPage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
+  const [projects, setProjects] = useState<any[]>([])
+  const [loadingProjects, setLoadingProjects] = useState(true)
+  const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const sensors = useSensors(
+      useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+      })
+  )
   const fetchTasks = async () => {
     try {
       setLoading(true)
@@ -86,7 +109,29 @@ export default function TasksPage() {
       setLoading(false)
     }
   }
+  const fetchProjects = async () => {
+    try {
+      setLoadingProjects(true)
+      const res = await fetch("/api/projects", { method: "GET", credentials: "include" })
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+      const data = await res.json()
+      setProjects(data)
+    } catch (err) {
+      console.error("Error fetching projects:", err)
+      toast({
+        title: "Error",
+        description: "Failed to load projects.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingProjects(false)
+    }
+  }
 
+  useEffect(() => {
+    fetchTasks()
+    fetchProjects()
+  }, [])
   // Load tasks on component mount
   useEffect(() => {
     fetchTasks()
@@ -132,7 +177,6 @@ export default function TasksPage() {
     try {
       const newStatus = checked ? "done" : "todo";
 
-      // Update di API
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: "PUT",
         headers: {
@@ -141,7 +185,6 @@ export default function TasksPage() {
         credentials: "include",
         body: JSON.stringify({
           status: newStatus,
-          // Kirim data lain yang diperlukan untuk update
           title: tasks.find(t => t.id === taskId)?.title || "",
           description: tasks.find(t => t.id === taskId)?.description || "",
           priority: tasks.find(t => t.id === taskId)?.priority || "medium",
@@ -152,7 +195,6 @@ export default function TasksPage() {
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-      // Update state lokal
       setTasks((prevTasks) =>
           prevTasks.map((task) =>
               task.id === taskId
@@ -177,7 +219,6 @@ export default function TasksPage() {
 
   const handleDeleteTask = async (taskId: string, taskTitle: string) => {
     try {
-      // Hapus dari API
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: "DELETE",
         credentials: "include",
@@ -185,7 +226,6 @@ export default function TasksPage() {
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-      // Update state lokal
       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
 
       toast({
@@ -217,7 +257,6 @@ export default function TasksPage() {
       let response;
 
       if (editingTask) {
-        // Update existing task
         response = await fetch(`/api/tasks/${editingTask.id}`, {
           method: "PUT",
           headers: {
@@ -234,7 +273,6 @@ export default function TasksPage() {
           }),
         });
       } else {
-        // Create new task
         response = await fetch("/api/tasks", {
           method: "POST",
           headers: {
@@ -256,7 +294,6 @@ export default function TasksPage() {
 
       const savedTask = await response.json();
 
-      // Update state lokal
       if (editingTask) {
         setTasks((prevTasks) =>
             prevTasks.map((task) => (task.id === editingTask.id ? { ...task, ...savedTask } : task))
@@ -274,7 +311,116 @@ export default function TasksPage() {
     }
   };
 
-  // Filter and sort tasks
+  // const handleReorderTasks = async (taskId: string, newPosition: number, projectId: string) => {
+  //   try {
+  //     const response = await fetch("/api/tasks/reorder", {
+  //       method: "PUT",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       credentials: "include",
+  //       body: JSON.stringify({
+  //         taskId,
+  //         newPosition,
+  //         projectId,
+  //       }),
+  //     });
+  //
+  //     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  //
+  //     setTasks((prevTasks) =>
+  //         prevTasks.map((task) =>
+  //             task.id === taskId ? { ...task, position: newPosition } : task
+  //         )
+  //     );
+  //
+  //     toast({
+  //       title: "Task reordered",
+  //       description: "Task position updated successfully.",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error reordering task:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to reorder task. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
+
+
+  const handleReorderTasks = async (reorderedTasks: Task[]) => {
+    try {
+      // Update positions for all tasks
+      const updates = reorderedTasks.map((task, index) => ({
+        taskId: task.id,
+        newPosition: index + 1,
+        projectId: task.projectId,
+      }))
+
+      // Send batch update
+      const response = await fetch("/api/tasks/reorder-batch", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ updates }),
+      })
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+
+      // Update local state
+      setTasks(reorderedTasks.map((task, index) => ({
+        ...task,
+        position: index + 1
+      })))
+
+    } catch (error) {
+      console.error("Error reordering tasks:", error)
+      toast({
+        title: "Error",
+        description: "Failed to reorder tasks. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    const task = filteredTasks.find(t => t.id === active.id)
+    setActiveTask(task || null)
+  }
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveTask(null)
+
+    if (!over || active.id === over.id) {
+      return
+    }
+
+    const activeIndex = filteredTasks.findIndex(task => task.id === active.id)
+    const overIndex = filteredTasks.findIndex(task => task.id === over.id)
+
+    if (activeIndex !== -1 && overIndex !== -1) {
+      const reorderedTasks = arrayMove(filteredTasks, activeIndex, overIndex)
+
+      const newFilteredTasks = reorderedTasks.map((task, index) => ({
+        ...task,
+        position: index + 1
+      }))
+
+      setTasks(prevTasks => {
+        return prevTasks.map(task => {
+          const reorderedTask = newFilteredTasks.find(t => t.id === task.id)
+          return reorderedTask || task
+        })
+      })
+
+      await handleReorderTasks(newFilteredTasks)
+    }
+  }
   const filteredTasks = tasks
     .filter((task) => {
       const matchesSearch =
@@ -304,7 +450,10 @@ export default function TasksPage() {
           return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
         case "created":
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        default: // updated
+        default:
+          if (sortBy === "position" && a.position !== null && b.position !== null) {
+            return a.position - b.position;
+          }
           return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       }
     })
@@ -312,7 +461,111 @@ export default function TasksPage() {
   const completedTasks = tasks.filter((task) => task.status === "done")
   const inProgressTasks = tasks.filter((task) => task.status === "in_progress")
   const todoTasks = tasks.filter((task) => task.status === "todo")
+  const SortableTaskItem = ({ task, project }: { task: Task; project: any }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: task.id })
 
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    }
+
+    return (
+        <Card
+            ref={setNodeRef}
+            style={style}
+            className={`border-border/50 hover:border-primary/50 transition-colors ${
+                isDragging ? 'shadow-lg' : ''
+            }`}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              {/* Drag Handle */}
+              <div
+                  {...attributes}
+                  {...listeners}
+                  className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded"
+              >
+                <div className="w-2 h-4 flex flex-col justify-center space-y-1">
+                  <div className="w-full h-0.5 bg-muted-foreground/50 rounded"></div>
+                  <div className="w-full h-0.5 bg-muted-foreground/50 rounded"></div>
+                  <div className="w-full h-0.5 bg-muted-foreground/50 rounded"></div>
+                </div>
+              </div>
+
+              <Checkbox
+                  checked={task.status === "done"}
+                  onCheckedChange={(checked) => handleTaskStatusChange(task.id, checked as boolean)}
+              />
+
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <h3
+                      className={`font-semibold ${task.status === "done" ? "line-through text-muted-foreground" : "text-foreground"}`}
+                  >
+                    {task.title}
+                  </h3>
+                  <Badge variant={getPriorityColor(task.priority)} className="text-xs">
+                    {task.priority}
+                  </Badge>
+                  <Badge variant={getStatusColor(task.status)} className="text-xs">
+                    {task.status.replace("_", " ")}
+                  </Badge>
+                </div>
+                {task.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
+                )}
+                <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                  <Link href={`/projects/${project?.id}`} className="hover:text-foreground transition-colors">
+                    {project?.name}
+                  </Link>
+                  <span>•</span>
+                  <span>Updated {format(new Date(task.updatedAt), "MMM d")}</span>
+                  {task.dueDate && (
+                      <>
+                        <span>•</span>
+                        <div className="flex items-center">
+                          <Calendar className="mr-1 h-3 w-3" />
+                          Due {format(new Date(task.dueDate), "MMM d")}
+                        </div>
+                      </>
+                  )}
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Task
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                      onClick={() => handleDeleteTask(task.id, task.title)}
+                      className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </CardContent>
+        </Card>
+    )
+  }
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -409,7 +662,7 @@ export default function TasksPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Projects</SelectItem>
-                  {mockProjects.map((project) => (
+                  {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
                     </SelectItem>
@@ -423,6 +676,7 @@ export default function TasksPage() {
                 <SelectContent>
                   <SelectItem value="updated">Last Updated</SelectItem>
                   <SelectItem value="created">Date Created</SelectItem>
+                  <SelectItem value="position">Position</SelectItem>
                   <SelectItem value="dueDate">Due Date</SelectItem>
                   <SelectItem value="priority">Priority</SelectItem>
                   <SelectItem value="title">Title</SelectItem>
@@ -436,79 +690,42 @@ export default function TasksPage() {
 
       {/* Tasks List */}
       {filteredTasks.length > 0 ? (
-        <div className="space-y-4">
-          {filteredTasks.map((task) => {
-            const project = mockProjects.find((p) => p.id === task.projectId)
-            return (
-              <Card key={task.id} className="border-border/50 hover:border-primary/50 transition-colors">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <Checkbox
-                      checked={task.status === "done"}
-                      onCheckedChange={(checked) => handleTaskStatusChange(task.id, checked as boolean)}
-                    />
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <h3
-                          className={`font-semibold ${task.status === "done" ? "line-through text-muted-foreground" : "text-foreground"}`}
-                        >
-                          {task.title}
-                        </h3>
-                        <Badge variant={getPriorityColor(task.priority)} className="text-xs">
-                          {task.priority}
-                        </Badge>
-                        <Badge variant={getStatusColor(task.status)} className="text-xs">
-                          {task.status.replace("_", " ")}
-                        </Badge>
+          <DndContext
+              sensors={sensors}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={filteredTasks.map(task => task.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4">
+                {filteredTasks.map((task) => {
+                  const project = projects.find((p) => p.id === task.projectId)
+                  return (
+                      <SortableTaskItem key={task.id} task={task} project={project} />
+                  )
+                })}
+              </div>
+            </SortableContext>
+
+            <DragOverlay>
+              {activeTask ? (
+                  <Card className="border-border/50 shadow-lg rotate-3">
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-2 h-4 flex flex-col justify-center space-y-1">
+                          <div className="w-full h-0.5 bg-muted-foreground/50 rounded"></div>
+                          <div className="w-full h-0.5 bg-muted-foreground/50 rounded"></div>
+                          <div className="w-full h-0.5 bg-muted-foreground/50 rounded"></div>
+                        </div>
+                        <Checkbox checked={activeTask.status === "done"} disabled />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-foreground">{activeTask.title}</h3>
+                        </div>
                       </div>
-                      {task.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-                      )}
-                      <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                        <Link href={`/projects/${project?.id}`} className="hover:text-foreground transition-colors">
-                          {project?.name}
-                        </Link>
-                        <span>•</span>
-                        <span>Updated {format(new Date(task.updatedAt), "MMM d")}</span>
-                        {task.dueDate && (
-                          <>
-                            <span>•</span>
-                            <div className="flex items-center">
-                              <Calendar className="mr-1 h-3 w-3" />
-                              Due {format(new Date(task.dueDate), "MMM d")}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleEditTask(task)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Task
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteTask(task.id, task.title)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                    </CardContent>
+                  </Card>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
       ) : (
         <Card className="border-border/50">
           <CardContent className="flex flex-col items-center justify-center py-16">
@@ -529,13 +746,12 @@ export default function TasksPage() {
         </Card>
       )}
 
-      {/* Task Modal */}
       <TaskModal
         open={isTaskModalOpen}
         onOpenChange={setIsTaskModalOpen}
         task={editingTask}
-        projectId={mockProjects[0]?.id || ""}
-        projects={mockProjects}
+        projectId={projects[0]?.id || ""}
+        projects={projects}
         onSave={handleSaveTask}
       />
     </div>
