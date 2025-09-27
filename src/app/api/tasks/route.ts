@@ -2,91 +2,93 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { activityLog } from "@/lib/utils";
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    const tasks = await prisma.task.findMany({
-        where: { userId: session.user.id },
-        orderBy: [
-            { position: 'asc' },
-            { createdAt: 'desc' },
-        ],
-    });
+  const tasks = await prisma.task.findMany({
+    where: { userId: session.user.id },
+    orderBy: [{ position: "asc" }, { createdAt: "desc" }],
+  });
 
-    return NextResponse.json(tasks);
+  return NextResponse.json(tasks);
 }
 
 export async function POST(req: Request) {
-    try{
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const body = await req.json();
-        const { title, description, status, priority, dueDate, projectId } = body;
-
-        if (!title || !projectId) {
-            return NextResponse.json(
-                { error: "Title & projectId wajib diisi" },
-                { status: 400 }
-            );
-        }
-        const project = await prisma.project.findFirst({
-            where: {
-                id: projectId,
-                userId: session.user.id,
-            },
-        });
-
-        if (!project) {
-            return NextResponse.json(
-                { error: "Project not found or unauthorized" },
-                { status: 404 }
-            );
-        }
-        const lastTask = await prisma.task.findFirst({
-            where: {
-                projectId,
-                userId: session.user.id,
-            },
-            orderBy: {
-                position: 'desc',
-            },
-        });
-        const nextPosition = (lastTask?.position ?? 0) + 1;
-        const task = await prisma.task.create({
-            data: {
-                title,
-                description,
-                status: status ?? "todo",
-                priority: priority ?? "medium",
-                dueDate: dueDate ? new Date(dueDate) : null,
-                projectId,
-                userId: session.user.id,
-                position: nextPosition,
-            },
-        });
-        console.log("Created task:", task);
-        return NextResponse.json(task, { status: 201 });
-    } catch (error) {
-        console.error("Error in POST /api/tasks:", error);
-
-        // Return detailed error information
-        if (error instanceof Error) {
-            return NextResponse.json(
-                { error: error.message },
-                { status: 500 }
-            );
-        }
-
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const body = await req.json();
+    const { title, description, status, priority, dueDate, projectId } = body;
+
+    if (!title || !projectId) {
+      return NextResponse.json(
+        { error: "Title & projectId wajib diisi" },
+        { status: 400 }
+      );
+    }
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!project) {
+      return NextResponse.json(
+        { error: "Project not found or unauthorized" },
+        { status: 404 }
+      );
+    }
+    const lastTask = await prisma.task.findFirst({
+      where: {
+        projectId,
+        userId: session.user.id,
+      },
+      orderBy: {
+        position: "desc",
+      },
+    });
+    const nextPosition = (lastTask?.position ?? 0) + 1;
+    const task = await prisma.task.create({
+      data: {
+        title,
+        description,
+        status: status ?? "todo",
+        priority: priority ?? "medium",
+        dueDate: dueDate ? new Date(dueDate) : null,
+        projectId,
+        userId: session.user.id,
+        position: nextPosition,
+      },
+    });
+    console.log("Created task:", task);
+    activityLog({
+      action: `Created Task`,
+      details: `Created Task "${title}"`,
+      userId: session.user.id,
+      projectId: project.id,
+      taskId: task.id,
+    });
+    return NextResponse.json(task, { status: 201 });
+  } catch (error) {
+    console.error("Error in POST /api/tasks:", error);
+
+    // Return detailed error information
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
