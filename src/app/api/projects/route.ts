@@ -33,17 +33,43 @@ export async function POST(req: Request) {
     );
   }
 
+  const existingProjects = await prisma.project.findMany({
+    where: {
+      userId: session.user.id,
+      name: {
+        startsWith: name,
+      },
+    },
+    select: { name: true },
+  });
+
+  let finalName = name;
+
+  if (existingProjects.length > 0) {
+    let maxSuffix = 0;
+    for (const p of existingProjects) {
+      const match = p.name.match(/\((\d+)\)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxSuffix) maxSuffix = num;
+      } else if (p.name === name) {
+        if (maxSuffix === 0) maxSuffix = 0;
+      }
+    }
+    finalName = `${name} (${maxSuffix + 1})`;
+  }
+
   const project = await prisma.project.create({
     data: {
-      name,
+      name: finalName,
       description,
       status: status ?? "active",
-      color: color,
+      color,
       startDate: startDate ? new Date(startDate) : null,
       endDate: endDate ? new Date(endDate) : null,
       userId: session.user.id,
     },
   });
 
-  return NextResponse.json(project, { status: 201 });
+  return NextResponse.json(project);
 }

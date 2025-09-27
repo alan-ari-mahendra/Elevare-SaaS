@@ -37,10 +37,10 @@ import {
   BarChart3,
   ExternalLink,
 } from "lucide-react";
-import { mockProjects, mockTasks } from "@/lib/mock-data";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Project, Task } from "@prisma/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -48,6 +48,7 @@ export default function ProjectDetailPage() {
   const { toast } = useToast();
   const projectId = params.id as string;
   const [project, setProject] = useState<Project | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskFilter, setTaskFilter] = useState("all");
@@ -174,12 +175,51 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleDuplicateProject = async () => {
+    try {
+      const baseName = project!.name.replace(/\(\d+\)$/, "").trim();
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: baseName,
+          description: project!.description,
+          status: project!.status,
+          color: project!.color,
+          startDate: project!.startDate,
+          endDate: project!.endDate,
+        }),
+      });
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      toast({
+        title: "Project duplicated",
+        description: `"${baseName}" has been duplicated successfully.`,
+      });
+      const projectRes = await response.json();
+      router.push(`/projects`);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to save project. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredTasks = tasks.filter((task) => {
     if (taskFilter === "all") return true;
     return task.status === taskFilter;
   });
 
   const getProject = useCallback(async () => {
+    setIsLoading(true);
     try {
       const responseProject = await fetch(`/api/projects/${projectId}`, {
         method: "GET",
@@ -201,14 +241,16 @@ export default function ProjectDetailPage() {
       const tasks = await responseTask.json();
 
       setTasks(tasks.filter((task: Task) => task.projectId === projectId));
+      setIsLoading(false);
     } catch (error) {}
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
     getProject();
   }, [getProject]);
 
-  if (!project) {
+  if (!project && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <h1 className="text-2xl font-bold text-foreground mb-2">
@@ -223,6 +265,80 @@ export default function ProjectDetailPage() {
             Back to Projects
           </Button>
         </Link>
+      </div>
+    );
+  }
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        {/* Breadcrumb skeleton */}
+        <div className="flex items-center space-x-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+
+        {/* Project Header skeleton */}
+        <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-3">
+              <Skeleton className="h-8 w-8 rounded" />
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-96" />
+            <div className="flex space-x-4">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-9 rounded" />
+          </div>
+        </div>
+
+        {/* Stats skeleton */}
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="border-border/50">
+              <CardHeader>
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Tasks skeleton */}
+        <Card className="border-border/50">
+          <CardHeader className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-4 w-40 mt-2" />
+            </div>
+            <Skeleton className="h-9 w-24" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center space-x-4 p-4 border border-border/50 rounded-lg"
+                >
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-64" />
+                  </div>
+                  <Skeleton className="h-6 w-6 rounded" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -245,7 +361,7 @@ export default function ProjectDetailPage() {
           Projects
         </Link>
         <span>/</span>
-        <span className="text-foreground">{project.name}</span>
+        <span className="text-foreground">{project!.name}</span>
       </div>
 
       {/* Project Header */}
@@ -258,37 +374,37 @@ export default function ProjectDetailPage() {
               </Button>
             </Link>
             <h1 className="text-3xl font-bold text-foreground">
-              {project.name}
+              {project!.name}
             </h1>
-            <Badge variant={getStatusColor(project.status)}>
-              {project.status.replace("_", " ")}
+            <Badge variant={getStatusColor(project!.status)}>
+              {project!.status.replace("_", " ")}
             </Badge>
           </div>
           <p className="text-muted-foreground max-w-2xl">
-            {project.description}
+            {project!.description}
           </p>
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
             <span>
-              Created {format(new Date(project.createdAt), "MMM d, yyyy")}
+              Created {format(new Date(project!.createdAt), "MMM d, yyyy")}
             </span>
             <span>•</span>
             <span>
-              Updated {format(new Date(project.updatedAt), "MMM d, yyyy")}
+              Updated {format(new Date(project!.updatedAt), "MMM d, yyyy")}
             </span>
-            {project.startDate && (
+            {project!.startDate && (
               <>
                 <span>•</span>
                 <div className="flex items-center">
                   <Calendar className="mr-1 h-4 w-4" />
                   Start Date{" "}
-                  {format(new Date(project.startDate), "MMM d, yyyy")}
+                  {format(new Date(project!.startDate), "MMM d, yyyy")}
                 </div>
               </>
             )}
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Link href={`/projects/${project.id}/edit`}>
+          <Link href={`/projects/${project!.id}/edit`}>
             <Button variant="outline">
               <Edit className="mr-2 h-4 w-4" />
               Edit
@@ -302,7 +418,7 @@ export default function ProjectDetailPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDuplicateProject}>
                 <Plus className="mr-2 h-4 w-4" />
                 Duplicate Project
               </DropdownMenuItem>
@@ -513,7 +629,6 @@ export default function ProjectDetailPage() {
         onOpenChange={setIsTaskModalOpen}
         task={editingTask}
         projectId={projectId}
-        projects={mockProjects}
         onSave={handleSaveTask}
       />
     </div>

@@ -113,20 +113,6 @@ export default function ProjectsPage() {
     try {
       const baseName = project.name.replace(/\(\d+\)$/, "").trim();
 
-      const duplicates = projects.filter((p) => p.name.startsWith(baseName));
-
-      let maxSuffix = 0;
-      duplicates.forEach((p) => {
-        const match = p.name.match(/\((\d+)\)$/);
-        if (match) {
-          const num = parseInt(match[1], 10);
-          if (num > maxSuffix) maxSuffix = num;
-        }
-      });
-
-      const projectName =
-        maxSuffix === 0 ? `${baseName} (1)` : `${baseName} (${maxSuffix + 1})`;
-
       const response = await fetch("/api/projects", {
         method: "POST",
         headers: {
@@ -134,7 +120,7 @@ export default function ProjectsPage() {
         },
         credentials: "include",
         body: JSON.stringify({
-          name: projectName,
+          name: baseName,
           description: project.description,
           status: project.status,
           color: project.color,
@@ -148,7 +134,7 @@ export default function ProjectsPage() {
 
       toast({
         title: "Project duplicated",
-        description: `"${projectName}" has been duplicated successfully.`,
+        description: `"${baseName}" has been duplicated successfully.`,
       });
       const projectRes = await response.json();
       setProjects((prev) => [...prev, projectRes]);
@@ -293,8 +279,8 @@ export default function ProjectsPage() {
             return (
               <Card
                 key={project.id}
-                onClick={() => router.push(`/projects/${project.id}`)}
-                className="border-border/50 hover:border-primary/50 transition-colors group cursor-pointer"
+                // onClick={() => router.push(`/projects/${project.id}`)}
+                className={`border-border/50 hover:border-primary/50 transition-colors group cursor-pointer `}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -313,7 +299,7 @@ export default function ProjectsPage() {
                       <div className="flex items-center space-x-2">
                         <Badge
                           variant={getStatusColor(project.status)}
-                          className="text-xs"
+                          className="text-xs whitespace-nowrap"
                         >
                           {project.status.replace("_", " ")}
                         </Badge>
@@ -384,7 +370,7 @@ export default function ProjectsPage() {
                           {Math.round(progress)}%
                         </span>
                       </div>
-                      <Progress value={progress} className="h-2" />
+                      <Progress value={progress} className={`h-2`} />
                     </div>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center space-x-4">
