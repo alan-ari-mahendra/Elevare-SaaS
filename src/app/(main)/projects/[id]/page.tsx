@@ -148,6 +148,32 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleDeleteProject = async () => {
+    try {
+      const projectName = project ? project.name : projectId;
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      router.push(`/projects`);
+
+      toast({
+        title: "Project deleted",
+        description: `"${projectName}" has been deleted successfully.`,
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to delete project.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredTasks = tasks.filter((task) => {
     if (taskFilter === "all") return true;
     return task.status === taskFilter;
@@ -281,7 +307,10 @@ export default function ProjectDetailPage() {
                 Duplicate Project
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                onClick={handleDeleteProject}
+                className="text-destructive focus:text-destructive"
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Project
               </DropdownMenuItem>
