@@ -1,12 +1,18 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +20,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Checkbox } from "@/components/ui/checkbox"
-import { TaskModal } from "@/components/task-modal"
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TaskModal } from "@/components/task-modal";
 import {
   Plus,
   Search,
@@ -28,37 +34,45 @@ import {
   Clock,
   AlertCircle,
   BarChart3,
-} from "lucide-react"
-import { mockProjects } from "@/lib/mock-data"
-import { format } from "date-fns"
-import { useToast } from "@/hooks/use-toast"
+} from "lucide-react";
+import { mockProjects } from "@/lib/mock-data";
+import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
-import {Label} from "@/components/ui/label";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {Task} from "@prisma/client";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Task } from "@prisma/client";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
-  const [projectFilter, setProjectFilter] = useState("all")
-  const [sortBy, setSortBy] = useState("updated")
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [projectFilter, setProjectFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("updated");
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
-      const response = await fetch("/api/tasks", { method: "GET", credentials: "include" })
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+      const response = await fetch("/api/tasks", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
 
-      const data = await response.json()
+      const data = await response.json();
 
       const transformedTasks = data.map((task: any) => ({
         id: task.id,
@@ -71,62 +85,62 @@ export default function TasksPage() {
         user_id: task.userId,
         createdAt: task.createdAt,
         updatedAt: task.updatedAt,
-      }))
+      }));
 
-      setTasks(transformedTasks)
+      setTasks(transformedTasks);
     } catch (err) {
-      console.error("Error fetching tasks:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch tasks")
+      console.error("Error fetching tasks:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch tasks");
       toast({
         title: "Error",
         description: "Failed to load tasks. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Load tasks on component mount
   useEffect(() => {
-    fetchTasks()
-    console.log("Tasks loaded from API:", tasks)
-  }, [])
+    fetchTasks();
+    console.log("Tasks loaded from API:", tasks);
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "done":
-        return "completed"
+        return "completed";
       case "in_progress":
-        return "in-progress"
+        return "in-progress";
       case "todo":
-        return "planning"
+        return "planning";
       default:
-        return "archived"
+        return "archived";
     }
-  }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "high"
+        return "high";
       case "medium":
-        return "medium"
+        return "medium";
       default:
-        return "low"
+        return "low";
     }
-  }
+  };
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case "high":
-        return <AlertCircle className="h-4 w-4" />
+        return <AlertCircle className="h-4 w-4" />;
       case "medium":
-        return <Clock className="h-4 w-4" />
+        return <Clock className="h-4 w-4" />;
       default:
-        return <CheckCircle2 className="h-4 w-4" />
+        return <CheckCircle2 className="h-4 w-4" />;
     }
-  }
+  };
 
   const handleTaskStatusChange = async (taskId: string, checked: boolean) => {
     try {
@@ -142,23 +156,28 @@ export default function TasksPage() {
         body: JSON.stringify({
           status: newStatus,
           // Kirim data lain yang diperlukan untuk update
-          title: tasks.find(t => t.id === taskId)?.title || "",
-          description: tasks.find(t => t.id === taskId)?.description || "",
-          priority: tasks.find(t => t.id === taskId)?.priority || "medium",
-          dueDate: tasks.find(t => t.id === taskId)?.dueDate,
-          projectId: tasks.find(t => t.id === taskId)?.projectId || ""
+          title: tasks.find((t) => t.id === taskId)?.title || "",
+          description: tasks.find((t) => t.id === taskId)?.description || "",
+          priority: tasks.find((t) => t.id === taskId)?.priority || "medium",
+          dueDate: tasks.find((t) => t.id === taskId)?.dueDate,
+          projectId: tasks.find((t) => t.id === taskId)?.projectId || "",
         }),
       });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
 
       // Update state lokal
       setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-              task.id === taskId
-                  ? { ...task, status: newStatus, updatedAt: new Date().toISOString() }
-                  : task,
-          ),
+        prevTasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                status: newStatus,
+                updatedAt: new Date().toISOString(),
+              }
+            : task
+        )
       );
 
       toast({
@@ -183,7 +202,8 @@ export default function TasksPage() {
         credentials: "include",
       });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
 
       // Update state lokal
       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
@@ -203,14 +223,14 @@ export default function TasksPage() {
   };
 
   const handleEditTask = (task: Task) => {
-    setEditingTask(task)
-    setIsTaskModalOpen(true)
-  }
+    setEditingTask(task);
+    setIsTaskModalOpen(true);
+  };
 
   const handleCreateTask = () => {
-    setEditingTask(undefined)
-    setIsTaskModalOpen(true)
-  }
+    setEditingTask(undefined);
+    setIsTaskModalOpen(true);
+  };
 
   const handleSaveTask = async (taskData: Partial<Task>) => {
     try {
@@ -230,7 +250,7 @@ export default function TasksPage() {
             status: taskData.status,
             priority: taskData.priority,
             dueDate: taskData.dueDate,
-            projectId: taskData.projectId
+            projectId: taskData.projectId,
           }),
         });
       } else {
@@ -247,19 +267,22 @@ export default function TasksPage() {
             status: taskData.status,
             priority: taskData.priority,
             dueDate: taskData.dueDate,
-            projectId: taskData.projectId
+            projectId: taskData.projectId,
           }),
         });
       }
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
 
       const savedTask = await response.json();
 
       // Update state lokal
       if (editingTask) {
         setTasks((prevTasks) =>
-            prevTasks.map((task) => (task.id === editingTask.id ? { ...task, ...savedTask } : task))
+          prevTasks.map((task) =>
+            task.id === editingTask.id ? { ...task, ...savedTask } : task
+          )
         );
       } else {
         setTasks((prevTasks) => [...prevTasks, savedTask]);
@@ -279,39 +302,49 @@ export default function TasksPage() {
     .filter((task) => {
       const matchesSearch =
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      const matchesStatus = statusFilter === "all" || task.status === statusFilter
-      const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter
-      const matchesProject = projectFilter === "all" || task.projectId === projectFilter
-      return matchesSearch && matchesStatus && matchesPriority && matchesProject
+        (task.description &&
+          task.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesStatus =
+        statusFilter === "all" || task.status === statusFilter;
+      const matchesPriority =
+        priorityFilter === "all" || task.priority === priorityFilter;
+      const matchesProject =
+        projectFilter === "all" || task.projectId === projectFilter;
+      return (
+        matchesSearch && matchesStatus && matchesPriority && matchesProject
+      );
     })
     .sort((a, b) => {
       switch (sortBy) {
         case "title":
-          return a.title.localeCompare(b.title)
+          return a.title.localeCompare(b.title);
         case "status":
-          return a.status.localeCompare(b.status)
+          return a.status.localeCompare(b.status);
         case "priority":
-          const priorityOrder = { high: 3, medium: 2, low: 1 }
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
           return (
             priorityOrder[b.priority as keyof typeof priorityOrder] -
             priorityOrder[a.priority as keyof typeof priorityOrder]
-          )
+          );
         case "dueDate":
-          if (!a.dueDate && !b.dueDate) return 0
-          if (!a.dueDate) return 1
-          if (!b.dueDate) return -1
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
         case "created":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         default: // updated
-          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
       }
-    })
+    });
 
-  const completedTasks = tasks.filter((task) => task.status === "done")
-  const inProgressTasks = tasks.filter((task) => task.status === "in_progress")
-  const todoTasks = tasks.filter((task) => task.status === "todo")
+  const completedTasks = tasks.filter((task) => task.status === "done");
+  const inProgressTasks = tasks.filter((task) => task.status === "in_progress");
+  const todoTasks = tasks.filter((task) => task.status === "todo");
 
   return (
     <div className="space-y-8">
@@ -319,7 +352,9 @@ export default function TasksPage() {
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
           <h1 className="text-3xl font-bold text-foreground">All Tasks</h1>
-          <p className="text-muted-foreground">Manage all your tasks across projects</p>
+          <p className="text-muted-foreground">
+            Manage all your tasks across projects
+          </p>
         </div>
         <Button onClick={handleCreateTask}>
           <Plus className="mr-2 h-4 w-4" />
@@ -438,38 +473,60 @@ export default function TasksPage() {
       {filteredTasks.length > 0 ? (
         <div className="space-y-4">
           {filteredTasks.map((task) => {
-            const project = mockProjects.find((p) => p.id === task.projectId)
+            const project = mockProjects.find((p) => p.id === task.projectId);
             return (
-              <Card key={task.id} className="border-border/50 hover:border-primary/50 transition-colors">
+              <Card
+                key={task.id}
+                className="border-border/50 hover:border-primary/50 transition-colors"
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-4">
                     <Checkbox
                       checked={task.status === "done"}
-                      onCheckedChange={(checked) => handleTaskStatusChange(task.id, checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleTaskStatusChange(task.id, checked as boolean)
+                      }
                     />
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center space-x-2">
                         <h3
-                          className={`font-semibold ${task.status === "done" ? "line-through text-muted-foreground" : "text-foreground"}`}
+                          className={`font-semibold ${
+                            task.status === "done"
+                              ? "line-through text-muted-foreground"
+                              : "text-foreground"
+                          }`}
                         >
                           {task.title}
                         </h3>
-                        <Badge variant={getPriorityColor(task.priority)} className="text-xs">
+                        <Badge
+                          variant={getPriorityColor(task.priority)}
+                          className="text-xs"
+                        >
                           {task.priority}
                         </Badge>
-                        <Badge variant={getStatusColor(task.status)} className="text-xs">
+                        <Badge
+                          variant={getStatusColor(task.status)}
+                          className="text-xs"
+                        >
                           {task.status.replace("_", " ")}
                         </Badge>
                       </div>
                       {task.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {task.description}
+                        </p>
                       )}
                       <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                        <Link href={`/projects/${project?.id}`} className="hover:text-foreground transition-colors">
+                        <Link
+                          href={`/projects/${project?.id}`}
+                          className="hover:text-foreground transition-colors"
+                        >
                           {project?.name}
                         </Link>
                         <span>•</span>
-                        <span>Updated {format(new Date(task.updatedAt), "MMM d")}</span>
+                        <span>
+                          Updated {format(new Date(task.updatedAt), "MMM d")}
+                        </span>
                         {task.dueDate && (
                           <>
                             <span>•</span>
@@ -506,25 +563,33 @@ export default function TasksPage() {
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       ) : (
         <Card className="border-border/50">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <CheckCircle2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No tasks found</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              No tasks found
+            </h3>
             <p className="text-muted-foreground text-center mb-6 max-w-sm">
-              {searchQuery || statusFilter !== "all" || priorityFilter !== "all" || projectFilter !== "all"
+              {searchQuery ||
+              statusFilter !== "all" ||
+              priorityFilter !== "all" ||
+              projectFilter !== "all"
                 ? "Try adjusting your search or filter criteria."
                 : "Get started by creating your first task."}
             </p>
-            {!searchQuery && statusFilter === "all" && priorityFilter === "all" && projectFilter === "all" && (
-              <Button onClick={handleCreateTask}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Task
-              </Button>
-            )}
+            {!searchQuery &&
+              statusFilter === "all" &&
+              priorityFilter === "all" &&
+              projectFilter === "all" && (
+                <Button onClick={handleCreateTask}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Task
+                </Button>
+              )}
           </CardContent>
         </Card>
       )}
@@ -535,9 +600,8 @@ export default function TasksPage() {
         onOpenChange={setIsTaskModalOpen}
         task={editingTask}
         projectId={mockProjects[0]?.id || ""}
-        projects={mockProjects}
         onSave={handleSaveTask}
       />
     </div>
-  )
+  );
 }
