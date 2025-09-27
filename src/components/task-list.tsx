@@ -1,8 +1,6 @@
 import React from 'react';
 import {
     DndContext,
-    DragEndEvent,
-    DragStartEvent,
     useSensor,
     useSensors,
     PointerSensor,
@@ -24,8 +22,7 @@ export function TaskList({
                              onDragStart,
                              onStatusChange,
                              onEdit,
-                             onDelete,
-                             projects
+                             onDelete
                          }) {
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -35,7 +32,6 @@ export function TaskList({
         }),
         useSensor(KeyboardSensor)
     );
-    console.log("projects task list",projects);
 
     return (
         <div className="space-y-4">
@@ -71,7 +67,6 @@ export function TaskList({
                                     onStatusChange={onStatusChange}
                                     onEdit={onEdit}
                                     onDelete={onDelete}
-                                    projects={projects}
                                 />
                             ))}
                         </div>

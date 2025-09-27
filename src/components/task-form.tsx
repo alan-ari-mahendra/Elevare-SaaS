@@ -1,17 +1,17 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import type {  Project } from "@/lib/types"
+import {useState} from "react"
+import {Button} from "@/components/ui/button"
+import {Input} from "@/components/ui/input"
+import {Label} from "@/components/ui/label"
+import {Textarea} from "@/components/ui/textarea"
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import {Calendar} from "@/components/ui/calendar"
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
+import {CalendarIcon} from "lucide-react"
+import {format} from "date-fns"
+import {cn} from "@/lib/utils"
+import type {Project} from "@/lib/types"
 
 interface TaskFormProps {
     formData: {
@@ -26,19 +26,19 @@ interface TaskFormProps {
     onChange: (field: string, value: string | Date | undefined) => void
 }
 
-export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
+export function TaskForm({formData, projects, onChange}: TaskFormProps) {
     const [datePickerOpen, setDatePickerOpen] = useState(false)
 
     const statusOptions = [
-        { value: "todo", label: "To Do" },
-        { value: "in_progress", label: "In Progress" },
-        { value: "done", label: "Done" },
+        {value: "todo", label: "To Do"},
+        {value: "in_progress", label: "In Progress"},
+        {value: "done", label: "Done"},
     ]
 
     const priorityOptions = [
-        { value: "low", label: "Low" },
-        { value: "medium", label: "Medium" },
-        { value: "high", label: "High" },
+        {value: "low", label: "Low"},
+        {value: "medium", label: "Medium"},
+        {value: "high", label: "High"},
     ]
 
     return (
@@ -48,7 +48,7 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
                 <Input
                     id="title"
                     placeholder="Enter task title"
-                    value={formData.title}
+                    value={formData.title || ""}
                     onChange={(e) => onChange("title", e.target.value)}
                     required
                 />
@@ -59,7 +59,7 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
                 <Textarea
                     id="description"
                     placeholder="Describe the task details"
-                    value={formData.description}
+                    value={formData.description || ""}
                     onChange={(e) => onChange("description", e.target.value)}
                     rows={3}
                 />
@@ -68,9 +68,12 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
             <div className="grid gap-4 grid-cols-2">
                 <div className="space-y-2">
                     <Label>Status</Label>
-                    <Select value={formData.status} onValueChange={(value) => onChange("status", value)}>
+                    <Select
+                        value={formData.status || "todo"}
+                        onValueChange={(value) => onChange("status", value)}
+                    >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue placeholder="Select status"/>
                         </SelectTrigger>
                         <SelectContent>
                             {statusOptions.map((option) => (
@@ -84,9 +87,12 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
 
                 <div className="space-y-2">
                     <Label>Priority</Label>
-                    <Select value={formData.priority} onValueChange={(value) => onChange("priority", value)}>
+                    <Select
+                        value={formData.priority || "medium"}
+                        onValueChange={(value) => onChange("priority", value)}
+                    >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
+                            <SelectValue placeholder="Select priority"/>
                         </SelectTrigger>
                         <SelectContent>
                             {priorityOptions.map((option) => (
@@ -101,9 +107,12 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
 
             <div className="space-y-2">
                 <Label>Project</Label>
-                <Select value={formData.projectId} onValueChange={(value) => onChange("projectId", value)}>
+                <Select
+                    value={formData.projectId || (projects.length > 0 ? projects[0].id : "")}
+                    onValueChange={(value) => onChange("projectId", value)}
+                >
                     <SelectTrigger>
-                        <SelectValue placeholder="Select project" />
+                        <SelectValue placeholder="Select project"/>
                     </SelectTrigger>
                     <SelectContent>
                         {projects.map((project) => (
@@ -132,7 +141,7 @@ export function TaskForm({ formData, projects, onChange }: TaskFormProps) {
                                 !formData.dueDate && "text-muted-foreground",
                             )}
                         >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            <CalendarIcon className="mr-2 h-4 w-4"/>
                             {formData.dueDate ? format(formData.dueDate, "PPP") : "Pick a date"}
                         </Button>
                     </PopoverTrigger>
