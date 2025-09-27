@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { activityLog } from "@/lib/utils";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -69,6 +70,13 @@ export async function POST(req: Request) {
       endDate: endDate ? new Date(endDate) : null,
       userId: session.user.id,
     },
+  });
+
+  activityLog({
+    action: `Created project`,
+    details: `Created project "${finalName}"`,
+    userId: session.user.id,
+    projectId: project.id,
   });
 
   return NextResponse.json(project);

@@ -47,6 +47,7 @@ import { Project, Task } from "@prisma/client";
 import { useRouter } from "next/navigation";
 
 export default function ProjectsPage() {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("updated");
@@ -176,6 +177,7 @@ export default function ProjectsPage() {
     });
 
   const getProjects = useCallback(async () => {
+    setIsLoading(true);
     try {
       const responseProjects = await fetch("/api/projects", {
         method: "GET",
@@ -188,6 +190,7 @@ export default function ProjectsPage() {
       setProjects(projects);
       const responseTasks = await fetch("/api/tasks", {
         method: "GET",
+
         credentials: "include",
       });
       if (!responseTasks.ok)
@@ -195,7 +198,9 @@ export default function ProjectsPage() {
 
       const task = await responseTasks.json();
       setTask(task);
+      setIsLoading(false);
     } catch (error) {}
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -261,8 +266,23 @@ export default function ProjectsPage() {
         </CardContent>
       </Card>
 
-      {/* Projects Grid */}
-      {filteredProjects.length > 0 ? (
+      {isLoading ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <Card key={idx} className="border-border/50 animate-pulse">
+              <CardHeader className="pb-3 space-y-2">
+                <div className="h-4 w-3/4 bg-muted rounded" />
+                <div className="h-3 w-1/2 bg-muted rounded" />
+              </CardHeader>
+              <CardContent className="pt-0 space-y-2">
+                <div className="h-4 w-full bg-muted rounded" />
+                <div className="h-4 w-5/6 bg-muted rounded" />
+                <div className="h-4 w-3/4 bg-muted rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredProjects.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => {
             const projectTasks = tasks.filter(
