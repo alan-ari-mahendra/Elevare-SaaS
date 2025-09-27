@@ -1,9 +1,8 @@
 "use client";
 
 import type React from "react";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   Card,
@@ -34,9 +33,12 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-export default function NewProjectPage() {
+export default function EditProjectPage() {
   const router = useRouter();
+  const params = useParams();
   const { toast } = useToast();
+  const projectId = params.id as string;
+
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -51,34 +53,68 @@ export default function NewProjectPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const getProject = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const responseProject = await fetch(`/api/projects/${projectId}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!responseProject.ok)
+        throw new Error(`HTTP error! status: ${responseProject.status}`);
+
+      const project = await responseProject.json();
+
+      setFormData({
+        name: project.name ?? "",
+        description: project.description ?? "",
+        status: project.status ?? "planning",
+        color: project.color ?? "#6366F1",
+        startDate: project.startDate ? new Date(project.startDate) : undefined,
+        endDate: project.endDate ? new Date(project.endDate) : undefined,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load project.",
+        variant: "destructive",
+      });
+    }
+    setIsLoading(false);
+  }, [projectId, toast]);
+
+  useEffect(() => {
+    getProject();
+  }, [getProject]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          ...formData,
-        }),
+        body: JSON.stringify(formData),
       });
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
+
       toast({
-        title: "Project created",
-        description: `"${formData.name}" has been created successfully.`,
+        title: "Project updated",
+        description: `"${formData.name}" has been updated successfully.`,
       });
       router.push("/projects");
-      setIsLoading(false);
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save project. Please try again.",
+        description: "Failed to update project. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,7 +152,7 @@ export default function NewProjectPage() {
           Projects
         </Link>
         <span>/</span>
-        <span className="text-foreground">New Project</span>
+        <span className="text-foreground">Edit Project</span>
       </div>
 
       {/* Header */}
@@ -127,11 +163,9 @@ export default function NewProjectPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Create New Project
-          </h1>
+          <h1 className="text-3xl font-bold text-foreground">Edit Project</h1>
           <p className="text-muted-foreground">
-            Set up a new project to start organizing your work
+            Update the details of your project
           </p>
         </div>
       </div>
@@ -143,7 +177,7 @@ export default function NewProjectPage() {
             <CardHeader>
               <CardTitle>Project Details</CardTitle>
               <CardDescription>
-                Provide basic information about your project
+                Modify the information for your project
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -217,6 +251,7 @@ export default function NewProjectPage() {
                   </Select>
                 </div>
               </div>
+
               <div className="flex flex-row items-center gap-4">
                 <div className="space-y-2 w-1/2">
                   <Label>Start Date (Optional)</Label>
@@ -286,11 +321,11 @@ export default function NewProjectPage() {
             </Link>
             <Button type="submit" disabled={isLoading || !formData.name.trim()}>
               {isLoading ? (
-                "Creating..."
+                "Saving..."
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Create Project
+                  Save Changes
                 </>
               )}
             </Button>
