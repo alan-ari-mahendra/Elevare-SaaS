@@ -1,18 +1,24 @@
 import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { GripVertical, MoreHorizontal, Edit, Trash2, Calendar } from "lucide-react";
-import Link from "next/link";
-import { format } from "date-fns";
+import {useSortable} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
+import {Card, CardContent} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {Checkbox} from "@/components/ui/checkbox";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {GripVertical, MoreHorizontal, Edit, Trash2, Calendar} from "lucide-react";
+import {format} from "date-fns";
 
-export function SortableTaskCard({ task, isReorderMode, onStatusChange, onEdit, onDelete, projects }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-        useSortable({ id: task.id });
+export function SortableTaskCard({task, isReorderMode, onStatusChange, onEdit, onDelete}) {
+    const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
+        useSortable({id: task.id});
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -21,8 +27,6 @@ export function SortableTaskCard({ task, isReorderMode, onStatusChange, onEdit, 
         zIndex: isDragging ? 999 : 'auto',
     };
 
-    const project = projects?.find((p) => p.id === task.projectId);
-    console.log("project",project);
     const getPriorityColor = (priority) => {
         switch (priority) {
             case "high":
@@ -59,7 +63,8 @@ export function SortableTaskCard({ task, isReorderMode, onStatusChange, onEdit, 
                 <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
                         {isReorderMode ? (
-                            <div className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing" {...attributes} {...listeners}>
+                            <div
+                                className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing" {...attributes} {...listeners}>
                                 <GripVertical className="h-5 w-5"/>
                             </div>
                         ) : (
@@ -99,17 +104,6 @@ export function SortableTaskCard({ task, isReorderMode, onStatusChange, onEdit, 
                                 </p>
                             )}
                             <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                {project && (
-                                    <>
-                                        <Link
-                                            href={`/projects/${project.id}`}
-                                            className="hover:text-foreground transition-colors"
-                                        >
-                                            {project.name}
-                                        </Link>
-                                        <span>•</span>
-                                    </>
-                                )}
                                 <span>
                                     Updated {format(new Date(task.updatedAt), "MMM d")}
                                 </span>
@@ -117,7 +111,7 @@ export function SortableTaskCard({ task, isReorderMode, onStatusChange, onEdit, 
                                     <>
                                         <span>•</span>
                                         <div className="flex items-center">
-                                            <Calendar className="mr-1 h-3 w-3" />
+                                            <Calendar className="mr-1 h-3 w-3"/>
                                             Due {format(new Date(task.dueDate), "MMM d")}
                                         </div>
                                     </>
@@ -128,21 +122,21 @@ export function SortableTaskCard({ task, isReorderMode, onStatusChange, onEdit, 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="sm">
-                                        <MoreHorizontal className="h-4 w-4" />
+                                        <MoreHorizontal className="h-4 w-4"/>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuItem onClick={() => onEdit(task)}>
-                                        <Edit className="mr-2 h-4 w-4" />
+                                        <Edit className="mr-2 h-4 w-4"/>
                                         Edit Task
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator/>
                                     <DropdownMenuItem
                                         onClick={() => onDelete(task.id, task.title)}
                                         className="text-destructive focus:text-destructive"
                                     >
-                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        <Trash2 className="mr-2 h-4 w-4"/>
                                         Delete
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>

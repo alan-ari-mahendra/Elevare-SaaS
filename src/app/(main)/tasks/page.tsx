@@ -15,28 +15,16 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
-    GripVertical,
 } from "lucide-react";
 import {useToast} from "@/hooks/use-toast";
 import {Task} from "@prisma/client";
 import {
-    DndContext,
     DragEndEvent,
     DragStartEvent,
-    useSensor,
-    useSensors,
-    PointerSensor,
-    KeyboardSensor,
-    rectIntersection,
 } from "@dnd-kit/core";
 import {
     arrayMove,
-    SortableContext,
-    verticalListSortingStrategy,
-    useSortable,
 } from "@dnd-kit/sortable";
-import {CSS} from "@dnd-kit/utilities";
-import {SortableTaskCard} from "@/components/sortable-task-card";
 import {TaskList} from "@/components/task-list";
 
 export default function TasksPage() {
@@ -45,7 +33,7 @@ export default function TasksPage() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [projectFilter, setProjectFilter] = useState("all");
-    const [sortBy, setSortBy] = useState("updated");
+    const [sortBy, setSortBy] = useState("position");
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
     const [isReorderMode, setIsReorderMode] = useState(false);
@@ -62,7 +50,7 @@ export default function TasksPage() {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
             setProjects(data);
-            console.log("project from fetch projetc",data);
+            console.log("project from fetch projetc", data);
         } catch (err) {
             console.error("Error fetching projects:", err);
             toast({
@@ -107,6 +95,7 @@ export default function TasksPage() {
             setTasks(transformedTasks);
         } catch (err) {
             console.error("Error fetching tasks:", err);
+            console.error("Error fetching tasks:", error);
             setError(err instanceof Error ? err.message : "Failed to fetch tasks");
             toast({
                 title: "Error",
@@ -118,24 +107,13 @@ export default function TasksPage() {
         }
     };
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 3,
-            },
-        }),
-        useSensor(KeyboardSensor)
-    );
-
     const handleDragStart = (event: DragStartEvent) => {
-        // Only allow drag in reorder mode
         if (!isReorderMode) return;
 
         console.log('Drag started for task:', event.active.id);
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
-        // Only allow drag in reorder mode
         if (!isReorderMode) return;
 
         const {active, over} = event;
@@ -158,10 +136,8 @@ export default function TasksPage() {
                 position: index + 1,
             }));
 
-            // Update tasks locally first
             setTasks(tasksWithNewPositions);
 
-            // Then update on the server
             handleReorderTasks(tasksWithNewPositions);
 
             console.log(`Task moved from position ${activeIndex + 1} to ${overIndex + 1}`);
@@ -172,7 +148,6 @@ export default function TasksPage() {
         try {
             const newStatus = checked ? "done" : "todo";
 
-            // Update di API
             const response = await fetch(`/api/tasks/${taskId}`, {
                 method: "PUT",
                 headers: {
@@ -181,7 +156,6 @@ export default function TasksPage() {
                 credentials: "include",
                 body: JSON.stringify({
                     status: newStatus,
-                    // Kirim data lain yang diperlukan untuk update
                     title: tasks.find((t) => t.id === taskId)?.title || "",
                     description: tasks.find((t) => t.id === taskId)?.description || "",
                     priority: tasks.find((t) => t.id === taskId)?.priority || "medium",
@@ -192,7 +166,6 @@ export default function TasksPage() {
 
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-            // Update state lokal
             setTasks((prevTasks) =>
                 prevTasks.map((task) =>
                     task.id === taskId
@@ -339,9 +312,6 @@ export default function TasksPage() {
                 description: "Failed to reorder tasks. Please try again.",
                 variant: "destructive",
             });
-
-            // Instead of fetching all tasks again, just revert to the original order
-            // This preserves the current filters and search
             fetchTasks();
         }
     };
@@ -379,7 +349,9 @@ export default function TasksPage() {
                     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
                 case "created":
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                default: // updated
+                case "position":
+                    return (a.position || 0) - (b.position || 0);
+                default:
                     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
             }
         });
@@ -388,29 +360,6 @@ export default function TasksPage() {
     const inProgressTasks = tasks.filter((task) => task.status === "in_progress");
     const todoTasks = tasks.filter((task) => task.status === "todo");
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "done":
-                return "completed";
-            case "in_progress":
-                return "in-progress";
-            case "todo":
-                return "planning";
-            default:
-                return "archived";
-        }
-    };
-
-    const getPriorityColor = (priority: string) => {
-        switch (priority) {
-            case "high":
-                return "high";
-            case "medium":
-                return "medium";
-            default:
-                return "low";
-        }
-    };
     if (loading) {
         return (
             <div className="container mx-auto py-8">
@@ -418,7 +367,13 @@ export default function TasksPage() {
             </div>
         );
     }
-
+    if (loadingProjects) {
+        return (
+            <div className="container mx-auto py-8">
+                <div className="text-center">Loading project...</div>
+            </div>
+        );
+    }
     return (
         <div className="space-y-8">
             <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
@@ -524,6 +479,7 @@ export default function TasksPage() {
                                     <SelectValue placeholder="Sort by"/>
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="position">Position</SelectItem>
                                     <SelectItem value="updated">Last Updated</SelectItem>
                                     <SelectItem value="created">Date Created</SelectItem>
                                     <SelectItem value="dueDate">Due Date</SelectItem>
@@ -545,23 +501,21 @@ export default function TasksPage() {
                 </CardContent>
             </Card>
 
-          <TaskList
-              tasks={filteredTasks}
-              isReorderMode={isReorderMode}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onStatusChange={handleTaskStatusChange}
-              onEdit={handleEditTask}
-              onDelete={handleDeleteTask}
-              projects={projects}
-          />
+            <TaskList
+                tasks={filteredTasks}
+                isReorderMode={isReorderMode}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onStatusChange={handleTaskStatusChange}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+            />
 
             <TaskModal
                 open={isTaskModalOpen}
                 onOpenChange={setIsTaskModalOpen}
                 task={editingTask}
                 projectId={projects[0]?.id || ""}
-                projects={projects}
                 onSave={handleSaveTask}
             />
         </div>
