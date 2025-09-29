@@ -32,7 +32,7 @@ import Link from "next/link"
 import {useParams, useRouter} from "next/navigation"
 import {useSession} from "next-auth/react"
 import {toast} from "sonner"
-import {TaskModal} from "@/components/task-modal"
+import { TaskModal } from "@/components/task-modal";
 
 interface Task {
     id: string
