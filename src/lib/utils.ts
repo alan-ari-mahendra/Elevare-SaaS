@@ -41,3 +41,28 @@ export async function activityLog(data: {
     },
   });
 }
+
+export const getStatusColor = (status: string) => {
+  switch (status) {
+    case "completed":
+    case "done":
+      return "completed";
+    case "in_progress":
+      return "in-progress";
+    case "planning":
+      return "planning";
+    default:
+      return "archived";
+  }
+};
+
+export const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case "high":
+      return "high";
+    case "medium":
+      return "medium";
+    default:
+      return "low";
+  }
+};
