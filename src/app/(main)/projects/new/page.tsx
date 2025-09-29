@@ -297,6 +297,7 @@ export default function NewProjectPage() {
           </div>
         </form>
       </div>
+
     </div>
   );
 }

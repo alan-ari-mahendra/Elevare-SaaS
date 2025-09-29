@@ -332,6 +332,7 @@ export default function EditProjectPage() {
           </div>
         </form>
       </div>
+
     </div>
   );
 }
