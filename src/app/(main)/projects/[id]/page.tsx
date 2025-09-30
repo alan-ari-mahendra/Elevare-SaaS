@@ -9,7 +9,7 @@ import { TaskModal } from "@/components/task/task-modal";
 import { ArrowLeft, Calendar, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { Project, Task } from "@prisma/client";
+import { Project, Task, User } from "@prisma/client"; // Tambahkan User di sini
 import { getStatusColor } from "@/lib/utils";
 import { deleteProject, duplicateProject, getProjectById } from "@/services/projects";
 import { deleteTask, getTasks, updateTask } from "@/services/tasks";
@@ -17,6 +17,10 @@ import { ProjectViewSkeleton } from "@/components/project/project-view-skeleton"
 import { ProjectStats } from "@/components/sections/project-stats";
 import { ProjectActionDropdown } from "@/components/project/project-action-dropdown";
 import { TaskList } from "@/components/project/task-list";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Kanban from "@/components/project/kanban";
+import { fetchUsers } from "@/services/users";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -27,6 +31,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<User[]>([]); // Tambahkan state untuk users
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
@@ -109,6 +114,24 @@ export default function ProjectDetailPage() {
     await refreshTasks();
   }, [refreshTasks]);
 
+  // Tambahkan fungsi untuk menangani pembaruan task dari Kanban
+  const handleTaskUpdate = async (taskId: string, updates: Partial<Task>) => {
+    try {
+      await updateTask(taskId, updates);
+      await refreshTasks();
+      toast({
+        title: "Task updated",
+        description: "Task status updated successfully."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update task status.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDeleteProject = async () => {
     try {
       const projectName = project ? project.name : projectId;
@@ -158,8 +181,16 @@ export default function ProjectDetailPage() {
       const projectData = await getProjectById(projectId);
       setProject(projectData);
       console.log("projectData", projectData);
-      const allTasks = await getTasks();
+
+      const [allTasks, allUsers] = await Promise.all([
+        getTasks(),
+        fetchUsers().catch(error => {
+          console.error("Error fetching users:", error);
+          return [];
+        })
+      ]);
       setTasks(allTasks.filter((task: Task) => task.projectId === projectId));
+      setUsers(allUsers);
     } catch (error) {
       console.error(error);
       toast({
@@ -284,13 +315,30 @@ export default function ProjectDetailPage() {
       />
 
       {/* Project Content */}
-      <TaskList
-        tasks={tasks}
-        onStatusChange={handleTaskStatusChange}
-        onEdit={handleEditTask}
-        onDelete={handleDeleteTask}
-        onCreateTask={handleCreateTask}
-      />
+      <Tabs defaultValue="task-list">
+        <TabsList>
+          <TabsTrigger value="task-list">TaskList</TabsTrigger>
+          <TabsTrigger value="kanban">Kanban</TabsTrigger>
+        </TabsList>
+        <TabsContent value="task-list">
+          <TaskList
+            tasks={tasks}
+            onStatusChange={handleTaskStatusChange}
+            onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
+            onCreateTask={handleCreateTask}
+          />
+        </TabsContent>
+        <TabsContent value="kanban">
+          {/* Kirim data tasks dan users ke komponen Kanban */}
+          <Kanban
+            tasks={tasks}
+            users={users}
+            onTaskUpdate={handleTaskUpdate}
+            onCreateTask={handleCreateTask}
+          />
+        </TabsContent>
+      </Tabs>
 
       <TaskModal
         open={isTaskModalOpen}

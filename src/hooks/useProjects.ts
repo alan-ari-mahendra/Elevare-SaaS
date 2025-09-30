@@ -23,6 +23,8 @@ export function useProjects() {
       const [proj, task] = await Promise.all([getProjects(), getTasks()]);
       setProjects(proj);
       setTasks(task);
+      console.log("Projects:", proj);
+      console.log("Tasks:", task);
     } catch (error) {
       console.error(error);
       toast({
