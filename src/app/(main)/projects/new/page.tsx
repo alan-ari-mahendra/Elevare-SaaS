@@ -5,7 +5,7 @@ import type React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { ProjectForm } from "@/components/project-form";
+import { ProjectForm } from "@/components/project/project-form";
 
 export default function NewProjectPage() {
 

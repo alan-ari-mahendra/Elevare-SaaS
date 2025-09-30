@@ -12,9 +12,18 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import {CheckCircle2} from "lucide-react";
-import {SortableTaskCard} from "@/components/sortable-task-card";
+import {SortableTaskCard} from "@/components/task/sortable-task-card";
 import {Card} from "@/components/ui/card";
-
+import { Task } from "@prisma/client";
+type Props = {
+  tasks: Task[];
+  isReorderMode: boolean;
+  onDragEnd: any;
+  onDragStart: any;
+  onStatusChange: (taskId: string, checked: boolean) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (taskId: string, taskTitle: string) => void;
+}
 export function TaskList({
                              tasks,
                              isReorderMode,
@@ -23,7 +32,7 @@ export function TaskList({
                              onStatusChange,
                              onEdit,
                              onDelete
-                         }) {
+                         }:Props) {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {

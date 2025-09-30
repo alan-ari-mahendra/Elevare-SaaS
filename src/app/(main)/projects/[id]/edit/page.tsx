@@ -1,48 +1,14 @@
 "use client";
 
-import type React from "react";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { ProjectForm } from "@/components/project-form";
-import { getProjectById } from "@/services/projects";
+import { ProjectForm } from "@/components/project/project-form";
+import { useEditProject } from "@/hooks/useEditProject";
 
 export default function EditProjectPage() {
-  const params = useParams();
-  const { toast } = useToast();
-  const projectId = params.id as string;
-  const [project, setProject] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { project, isLoading } = useEditProject();
 
-  useEffect(() => {
-    const fetchProject = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getProjectById(projectId);
-        setProject({
-          id: data.id,
-          name: data.name,
-          description: data.description,
-          status: data.status,
-          color: data.color,
-          startDate: data.startDate ? new Date(data.startDate) : undefined,
-          endDate: data.endDate ? new Date(data.endDate) : undefined
-        });
-      } catch {
-        toast({
-          title: "Error",
-          description: "Failed to load project.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProject();
-  }, [projectId, toast]);
   return (
     <div className="space-y-8">
       {/* Breadcrumb */}
@@ -81,7 +47,6 @@ export default function EditProjectPage() {
 
       {/* Form */}
       <ProjectForm mode="edit" initialData={project} isLoading={isLoading} />
-
     </div>
   );
 }

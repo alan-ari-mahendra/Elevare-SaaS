@@ -1,106 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Project, Task } from "@prisma/client";
 import ProjectsFilters from "@/components/sections/projects-filters";
-import { deleteProject, duplicateProject, getProjects } from "@/services/projects";
-import { getTasks } from "@/services/tasks";
-import ProjectCard from "@/components/project-card";
+import ProjectCard from "@/components/project/project-card";
+import { useProjects } from "@/hooks/useProjects";
 
 export default function ProjectsPage() {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("updated");
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const { toast } = useToast();
-
-  const handleDeleteProject = async (projectId: string, projectName: string) => {
-    try {
-      await deleteProject(projectId);
-      setProjects((prev) => prev.filter((p) => p.id !== projectId));
-
-      toast({
-        title: "Project deleted",
-        description: `"${projectName}" has been deleted successfully.`
-      });
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to delete project.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDuplicateProject = async (project: Project) => {
-    try {
-      const newProject = await duplicateProject(project);
-      setProjects((prev) => [...prev, newProject]);
-
-      toast({
-        title: "Project duplicated",
-        description: `"${newProject.name}" has been duplicated successfully.`
-      });
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to save project. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const filteredProjects = projects
-    .filter((project) => {
-      const matchesSearch = project.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const matchesStatus =
-        statusFilter === "all" || project.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "status":
-          return a.status.localeCompare(b.status);
-        case "created":
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        default:
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
-      }
-    });
-
-  const fetchProjectsData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [proj, task] = await Promise.all([getProjects(), getTasks()]);
-      setProjects(proj);
-      setTasks(task);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProjectsData();
-  }, [fetchProjectsData]);
+  const {
+    isLoading,
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    sortBy,
+    setSortBy,
+    filteredProjects,
+    tasks,
+    handleDeleteProject,
+    handleDuplicateProject
+  } = useProjects();
 
   return (
     <div className="space-y-8">
