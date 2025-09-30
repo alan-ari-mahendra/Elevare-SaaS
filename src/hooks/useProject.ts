@@ -30,7 +30,9 @@ export function useProject() {
     try {
       const projectData = await getProjectById(projectId);
       setProject(projectData);
+      console.log("Project data:", projectData);
       const allTasks = await getTasks();
+      console.log("All tasks:", allTasks);
       setTasks(allTasks.filter((task: Task) => task.projectId === projectId));
     } catch (error) {
       console.error(error);
@@ -172,6 +174,7 @@ export function useProject() {
     completedTasks,
     inProgressTasks,
     progress,
+    getProject,
     handleTaskStatusChange,
     handleDeleteTask,
     handleEditTask,

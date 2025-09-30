@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { TaskActionDropdown } from "@/components/task/task-action-dropdown";
 import { Task } from "@prisma/client";
+import { getPriorityColor, getStatusColor } from "@/lib/utils";
 
 type Props = {
   task: Task;
@@ -18,10 +19,10 @@ type Props = {
   onDelete: (taskId: string, taskTitle: string) => void;
 };
 
-type Priority = "high" | "medium" | "low";
-type Status = "todo" | "in_progress" | "done";
-type Checked = "done" | "todo";
-type BadgeVariant = "destructive" | "default" | "secondary" | "outline" | "completed";
+export type Priority = "high" | "medium" | "low";
+export type Status = "todo" | "in_progress" | "done";
+export type Checked = "done" | "todo";
+export type BadgeVariant = "destructive" | "default" | "secondary" | "outline" | "completed";
 
 export function SortableTaskCard({
                                    task,
@@ -38,32 +39,6 @@ export function SortableTaskCard({
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 999 : "auto"
-  };
-
-  const getPriorityColor = (priority: Priority): BadgeVariant => {
-    switch (priority) {
-      case "high":
-        return "destructive";
-      case "medium":
-        return "default";
-      case "low":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
-
-  const getStatusColor = (status: Status): BadgeVariant => {
-    switch (status) {
-      case "todo":
-        return "outline";
-      case "in_progress":
-        return "default";
-      case "done":
-        return "secondary";
-      default:
-        return "outline";
-    }
   };
 
   const handleTaskStatusChange = (checked: boolean | "indeterminate") => {
@@ -91,7 +66,7 @@ export function SortableTaskCard({
             )}
             <div className="flex-1 space-y-2">
               <div className="flex items-center space-x-2">
-                <Link href={`/tasks/${task.id}`} className="hover:underline">
+                <Link href={`/tasks/${task.id}`} className="hover:underline bg-pink-600">
                   <h3
                     className={`font-semibold ${
                       task.status === "done"
