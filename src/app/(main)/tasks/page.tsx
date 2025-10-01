@@ -7,7 +7,7 @@ import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Switch} from "@/components/ui/switch";
 import {Label} from "@/components/ui/label";
-import {TaskModal} from "@/components/task-modal";
+import {TaskModal} from "@/components/task/task-modal";
 import {
     Plus,
     Search,
@@ -25,8 +25,8 @@ import {
 import {
     arrayMove,
 } from "@dnd-kit/sortable";
-import {TaskList} from "@/components/task-list";
-
+import {TaskList} from "@/components/task/task-list";
+export type Status = "todo" | "in_progress" | "done";
 export default function TasksPage() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
@@ -144,9 +144,9 @@ export default function TasksPage() {
         }
     };
 
-    const handleTaskStatusChange = async (taskId: string, checked: boolean) => {
+    const handleTaskStatusChange = async (taskId: string, checked: boolean | "indeterminate") => {
         try {
-            const newStatus = checked ? "done" : "todo";
+            const newStatus: Status = checked === true ? "done" : "todo";
 
             const response = await fetch(`/api/tasks/${taskId}`, {
                 method: "PUT",
@@ -169,7 +169,7 @@ export default function TasksPage() {
             setTasks((prevTasks) =>
                 prevTasks.map((task) =>
                     task.id === taskId
-                        ? {...task, status: newStatus, updatedAt: new Date().toISOString()}
+                        ? {...task, status: newStatus, updatedAt: new Date()}
                         : task,
                 ),
             );
@@ -221,65 +221,6 @@ export default function TasksPage() {
     const handleCreateTask = () => {
         setEditingTask(undefined);
         setIsTaskModalOpen(true);
-    };
-
-    const handleSaveTask = async (taskData: Partial<Task>) => {
-        try {
-            let response;
-
-            if (editingTask) {
-                response = await fetch(`/api/tasks/${editingTask.id}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        title: taskData.title,
-                        description: taskData.description,
-                        status: taskData.status,
-                        priority: taskData.priority,
-                        dueDate: taskData.dueDate,
-                        projectId: taskData.projectId,
-                    }),
-                });
-            } else {
-                response = await fetch("/api/tasks", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        title: taskData.title,
-                        description: taskData.description,
-                        status: taskData.status,
-                        priority: taskData.priority,
-                        dueDate: taskData.dueDate,
-                        projectId: taskData.projectId,
-                    }),
-                });
-            }
-
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-            const savedTask = await response.json();
-
-            if (editingTask) {
-                setTasks((prevTasks) =>
-                    prevTasks.map((task) => (task.id === editingTask.id ? {...task, ...savedTask} : task)),
-                );
-            } else {
-                setTasks((prevTasks) => [...prevTasks, savedTask]);
-            }
-        } catch (error) {
-            console.error("Error saving task:", error);
-            toast({
-                title: "Error",
-                description: "Failed to save task. Please try again.",
-                variant: "destructive",
-            });
-        }
     };
 
     const handleReorderTasks = async (reorderedTasks: Task[]) => {
@@ -516,7 +457,7 @@ export default function TasksPage() {
                 onOpenChange={setIsTaskModalOpen}
                 task={editingTask}
                 projectId={projects[0]?.id || ""}
-                onSave={handleSaveTask}
+                // onSave={handleSaveTask}
             />
         </div>
     );

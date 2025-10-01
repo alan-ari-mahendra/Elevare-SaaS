@@ -41,3 +41,44 @@ export async function activityLog(data: {
     },
   });
 }
+
+export const getStatusColor = (status: string) => {
+  switch (status) {
+    case "completed":
+    case "done":
+      return "completed";
+    case "in_progress":
+      return "in-progress";
+    case "planning":
+      return "planning";
+    default:
+      return "archived";
+  }
+};
+
+export const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case "high":
+      return "high";
+    case "medium":
+      return "medium";
+    default:
+      return "low";
+  }
+};
+
+export const getStatusOptions = [
+  { value: "planning", label: "Planning" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+  { value: "archived", label: "Archived" }
+];
+
+export const getColorOptions = [
+  { value: "#6366F1", label: "Indigo", color: "bg-indigo-500" },
+  { value: "#10B981", label: "Emerald", color: "bg-emerald-500" },
+  { value: "#F59E0B", label: "Amber", color: "bg-amber-500" },
+  { value: "#EF4444", label: "Red", color: "bg-red-500" },
+  { value: "#8B5CF6", label: "Violet", color: "bg-violet-500" },
+  { value: "#06B6D4", label: "Cyan", color: "bg-cyan-500" }
+];
