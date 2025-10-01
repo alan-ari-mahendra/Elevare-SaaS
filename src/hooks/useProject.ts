@@ -7,7 +7,8 @@ import {
   duplicateProject
 } from '@/services/projects';
 import { deleteTask, getTasks, updateTask } from "@/services/tasks";
-import { Project, Task } from "@prisma/client";
+import { Project, Task, User } from "@prisma/client";
+import { fetchUsers } from "@/services/users";
 
 export function useProject() {
   const params = useParams();
@@ -17,6 +18,7 @@ export function useProject() {
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
@@ -25,15 +27,22 @@ export function useProject() {
   const progress =
     tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
 
-  const getProject = useCallback(async () => {
+  const getProject = useCallback(async (projectId: string) => {
     setIsLoading(true);
     try {
       const projectData = await getProjectById(projectId);
       setProject(projectData);
       console.log("Project data:", projectData);
-      const allTasks = await getTasks();
-      console.log("All tasks:", allTasks);
+      const [allTasks, allUsers] = await Promise.all([
+        getTasks(),
+        fetchUsers().catch(error => {
+          console.error("Error fetching users:", error);
+          return [];
+        })
+      ]);
+
       setTasks(allTasks.filter((task: Task) => task.projectId === projectId));
+      setUsers(allUsers);
     } catch (error) {
       console.error(error);
       toast({
@@ -168,6 +177,7 @@ export function useProject() {
     project,
     isLoading,
     tasks,
+    users,
     isTaskModalOpen,
     setIsTaskModalOpen,
     editingTask,

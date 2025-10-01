@@ -30,6 +30,7 @@ model User {
   activities Activity[]
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+  Comment    Comment[]
 }
 
 model Project {
@@ -63,6 +64,7 @@ model Task {
   activities  Activity[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  Comment     Comment[]
 }
 
 model Activity {
@@ -75,5 +77,15 @@ model Activity {
   project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   taskId    String?
   task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }

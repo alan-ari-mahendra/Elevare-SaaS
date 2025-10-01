@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,203 +8,45 @@ import { TaskModal } from "@/components/task/task-modal";
 import { ArrowLeft, Calendar, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { Project, Task, User } from "@prisma/client"; // Tambahkan User di sini
 import { getStatusColor } from "@/lib/utils";
-import { deleteProject, duplicateProject, getProjectById } from "@/services/projects";
-import { deleteTask, getTasks, updateTask } from "@/services/tasks";
 import { ProjectViewSkeleton } from "@/components/project/project-view-skeleton";
 import { ProjectStats } from "@/components/sections/project-stats";
 import { ProjectActionDropdown } from "@/components/project/project-action-dropdown";
 import { TaskList } from "@/components/project/task-list";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Kanban from "@/components/project/kanban";
-import { fetchUsers } from "@/services/users";
+import { useProject } from "@/hooks/useProject";
+import { updateTask } from "@/services/tasks";
+import { useTaskOperations } from "@/hooks/useTaskOperations"; // Import updateTask
 
 export default function ProjectDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { toast } = useToast();
   const projectId = params.id as string;
-  const [project, setProject] = useState<Project | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { toast } = useToast();
+  const {
+    project,
+    isLoading,
+    tasks,
+    users,
+    isTaskModalOpen,
+    setIsTaskModalOpen,
+    editingTask,
+    completedTasks,
+    inProgressTasks,
+    progress,
+    handleTaskStatusChange,
+    handleDeleteTask,
+    handleEditTask,
+    handleCreateTask,
+    handleTaskSaved,
+    handleDeleteProject,
+    handleDuplicateProject,
+    refreshTasks
+  } = useProject();
 
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [users, setUsers] = useState<User[]>([]); // Tambahkan state untuk users
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
-
-  const completedTasks = tasks.filter((task) => task.status === "done");
-  const inProgressTasks = tasks.filter((task) => task.status === "in_progress");
-  const progress =
-    tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
-
-  const handleTaskStatusChange = async (taskId: string, checked: boolean) => {
-    try {
-      await updateTask(taskId, { status: checked ? "done" : "todo" });
-      await refreshTasks();
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.id === taskId
-            ? {
-              ...task,
-              status: checked ? "done" : "todo",
-              updated_at: new Date().toISOString()
-            }
-            : task
-        )
-      );
-      toast({
-        title: checked ? "Task completed" : "Task reopened",
-        description: "Task status updated successfully."
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update task status.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteTask = async (taskId: string, taskTitle: string) => {
-    try {
-      await deleteTask(taskId);
-      await refreshTasks();
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-      toast({
-        title: "Task deleted",
-        description: `"${taskTitle}" has been deleted successfully.`
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete task.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsTaskModalOpen(true);
-  };
-
-  const handleCreateTask = () => {
-    setEditingTask(undefined);
-    setIsTaskModalOpen(true);
-  };
-
-  const refreshTasks = useCallback(async () => {
-    try {
-      const allTasks = await getTasks();
-      setTasks(allTasks.filter((task: Task) => task.projectId === projectId));
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to refresh tasks.",
-        variant: "destructive"
-      });
-    }
-  }, [projectId, toast]);
-
-  const handleTaskSaved = useCallback(async () => {
-    await refreshTasks();
-  }, [refreshTasks]);
-
-  // Tambahkan fungsi untuk menangani pembaruan task dari Kanban
-  const handleTaskUpdate = async (taskId: string, updates: Partial<Task>) => {
-    try {
-      await updateTask(taskId, updates);
-      await refreshTasks();
-      toast({
-        title: "Task updated",
-        description: "Task status updated successfully."
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update task status.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteProject = async () => {
-    try {
-      const projectName = project ? project.name : projectId;
-
-      await deleteProject(projectId);
-
-
-      router.push(`/projects`);
-      toast({
-        title: "Project deleted",
-        description: `"${projectName}" has been deleted successfully.`
-      });
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to delete project.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDuplicateProject = async () => {
-    try {
-      if (!project) return;
-
-      await duplicateProject(project);
-
-      toast({
-        title: "Project duplicated",
-        description: `"${project.name}" has been duplicated successfully.`
-      });
-      router.push(`/projects`);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to duplicate project. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const getProject = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const projectData = await getProjectById(projectId);
-      setProject(projectData);
-      console.log("projectData", projectData);
-
-      const [allTasks, allUsers] = await Promise.all([
-        getTasks(),
-        fetchUsers().catch(error => {
-          console.error("Error fetching users:", error);
-          return [];
-        })
-      ]);
-      setTasks(allTasks.filter((task: Task) => task.projectId === projectId));
-      setUsers(allUsers);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to load project data.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projectId, toast]);
-
-  useEffect(() => {
-    getProject();
-  }, [getProject]);
+const {
+  handleTaskUpdate
+} = useTaskOperations()
 
   if (!project && !isLoading) {
     return (
@@ -225,6 +66,7 @@ export default function ProjectDetailPage() {
       </div>
     );
   }
+
   if (isLoading) {
     return (
       <ProjectViewSkeleton />
@@ -330,7 +172,6 @@ export default function ProjectDetailPage() {
           />
         </TabsContent>
         <TabsContent value="kanban">
-          {/* Kirim data tasks dan users ke komponen Kanban */}
           <Kanban
             tasks={tasks}
             users={users}

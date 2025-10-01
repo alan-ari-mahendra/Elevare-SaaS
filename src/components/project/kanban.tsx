@@ -99,7 +99,7 @@ const Kanban = ({ tasks, users, onTaskUpdate,onCreateTask }: KanbanProps) => {
                   key={task.id}
                   name={task.name}
                 >
-                  <div className="flex flex-col gap-2 bg-amber-300">
+                  <div className="flex flex-col gap-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-col gap-1">
                         <p className="m-0 flex-1 font-medium text-sm">

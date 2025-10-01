@@ -66,7 +66,7 @@ export function SortableTaskCard({
             )}
             <div className="flex-1 space-y-2">
               <div className="flex items-center space-x-2">
-                <Link href={`/tasks/${task.id}`} className="hover:underline bg-pink-600">
+                <Link href={`/tasks/${task.id}`} className="hover:underline">
                   <h3
                     className={`font-semibold ${
                       task.status === "done"

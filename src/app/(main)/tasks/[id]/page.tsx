@@ -36,6 +36,7 @@ import React, { useEffect } from "react"
 import { getPriorityColor, getStatusColor } from "@/lib/utils";
 import { Status } from "@/app/(main)/tasks/page";
 import { Priority } from "@/components/task/sortable-task-card";
+import { CommentSection } from "@/components/task/comment-section";
 
 export default function TaskDetailPage() {
   const { data: session } = useSession()
@@ -60,7 +61,7 @@ export default function TaskDetailPage() {
 
   useEffect(() => {
     if (task?.projectId) {
-      getProject()
+      getProject(task.projectId) // Perbaikan: Sertakan projectId sebagai parameter
     }
   }, [task, getProject])
 
@@ -69,7 +70,7 @@ export default function TaskDetailPage() {
 
     // Refresh project data if project has changed
     if (taskData.projectId && taskData.projectId !== task?.projectId) {
-      getProject()
+      getProject(taskData.projectId) // Perbaikan: Sertakan projectId sebagai parameter
     }
   }
 
@@ -327,7 +328,7 @@ export default function TaskDetailPage() {
           </Card>
         </div>
       </div>
-
+      <CommentSection taskId={task.id} />
       <TaskModal
         open={isTaskModalOpen}
         onOpenChange={setIsTaskModalOpen}

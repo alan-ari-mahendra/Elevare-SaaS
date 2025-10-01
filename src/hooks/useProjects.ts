@@ -6,7 +6,8 @@ import {
   duplicateProject
 } from '@/services/projects';
 import { getTasks } from '@/services/tasks';
-import { Project, Task } from "@prisma/client";
+import { Project, Task, User } from "@prisma/client";
+import { fetchUsers } from "@/services/users";
 
 export function useProjects() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -15,16 +16,27 @@ export function useProjects() {
   const [sortBy, setSortBy] = useState("updated");
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const { toast } = useToast();
 
   const fetchProjectsData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [proj, task] = await Promise.all([getProjects(), getTasks()]);
+      const [proj, task, allUsers] = await Promise.all([
+        getProjects(),
+        getTasks(),
+        fetchUsers().catch(error => {
+          console.error("Error fetching users:", error);
+          return [];
+        })
+      ]);
+
       setProjects(proj);
       setTasks(task);
+      setUsers(allUsers);
       console.log("Projects:", proj);
       console.log("Tasks:", task);
+      console.log("Users:", allUsers);
     } catch (error) {
       console.error(error);
       toast({
@@ -115,6 +127,7 @@ export function useProjects() {
     setSortBy,
     projects,
     tasks,
+    users,
     filteredProjects,
     handleDeleteProject,
     handleDuplicateProject,
