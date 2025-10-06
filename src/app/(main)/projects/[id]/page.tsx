@@ -43,7 +43,8 @@ export default function ProjectDetailPage() {
     handleDuplicateProject,
     refreshTasks
   } = useProject();
-
+  console.log("1",params.id)
+  console.log("2",projectId)
 const {
   handleTaskUpdate
 } = useTaskOperations()

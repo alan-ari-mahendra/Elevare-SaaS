@@ -71,7 +71,6 @@ export function useProject() {
 
   const handleTaskStatusChange = useCallback(async (taskId: string, checked: boolean) => {
     try {
-      // Asumsikan ada updateTask di service tasks
       await updateTask(taskId, { status: checked ? "done" : "todo" });
       await refreshTasks();
       setTasks((prevTasks) =>
@@ -100,7 +99,6 @@ export function useProject() {
 
   const handleDeleteTask = useCallback(async (taskId: string, taskTitle: string) => {
     try {
-      // Asumsikan ada deleteTask di service tasks
       await deleteTask(taskId);
       await refreshTasks();
       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
@@ -170,7 +168,7 @@ export function useProject() {
   }, [project, router, toast]);
 
   useEffect(() => {
-    getProject();
+    getProject(projectId);
   }, [getProject]);
 
   return {
