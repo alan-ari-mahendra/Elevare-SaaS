@@ -15,7 +15,7 @@ export default function LandingPage() {
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <BarChart3 className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">ProjectFlow</span>
+              <span className="text-xl font-bold text-foreground">Elevare</span>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <Link
@@ -185,7 +185,7 @@ export default function LandingPage() {
               Trusted by teams worldwide
             </h2>
             <p className="mt-4 text-lg text-muted-foreground text-pretty">
-              See what our customers have to say about ProjectFlow.
+              See what our customers have to say about Elevare.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-7xl">
@@ -198,7 +198,7 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <CardDescription className="text-base">
-                    "ProjectFlow transformed how our team collaborates. We've reduced project delivery time by 40% and
+                    "Elevare transformed how our team collaborates. We've reduced project delivery time by 40% and
                     improved client satisfaction significantly."
                   </CardDescription>
                 </CardHeader>
@@ -248,7 +248,7 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <CardDescription className="text-base">
-                    "Simple, intuitive, and powerful. ProjectFlow strikes the perfect balance between functionality and
+                    "Simple, intuitive, and powerful. Elevare strikes the perfect balance between functionality and
                     ease of use. Our team adopted it instantly."
                   </CardDescription>
                 </CardHeader>
@@ -277,7 +277,7 @@ export default function LandingPage() {
               Ready to transform your workflow?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground text-pretty">
-              Join thousands of teams already using ProjectFlow to deliver better projects faster.
+              Join thousands of teams already using Elevare to deliver better projects faster.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link href="/register">
@@ -304,7 +304,7 @@ export default function LandingPage() {
               <div className="h-6 w-6 rounded bg-primary flex items-center justify-center">
                 <BarChart3 className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold text-foreground">ProjectFlow</span>
+              <span className="font-semibold text-foreground">Elevare</span>
             </div>
             <div className="flex items-center space-x-6">
               <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -322,7 +322,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-8 border-t border-border/40 pt-8 text-center">
-            <p className="text-sm text-muted-foreground">© 2024 ProjectFlow. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">© 2024 Elevare. All rights reserved.</p>
           </div>
         </div>
       </footer>

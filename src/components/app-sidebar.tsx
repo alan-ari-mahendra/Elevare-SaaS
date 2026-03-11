@@ -50,7 +50,7 @@ export function AppSidebar() {
           </div>
           {state === "expanded" && (
             <span className="text-xl font-bold text-foreground">
-              ProjectFlow
+              Elevare
             </span>
           )}
         </div>

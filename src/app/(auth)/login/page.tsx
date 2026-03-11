@@ -47,7 +47,7 @@ export default function LoginPage() {
     } else {
       toast({
         title: "Login successful",
-        description: "Welcome back to ProjectFlow!",
+        description: "Welcome back to Elevare!",
       });
       router.push("/dashboard");
     }
@@ -69,7 +69,7 @@ export default function LoginPage() {
               <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold text-foreground">
-              ProjectFlow
+              Elevare
             </span>
           </Link>
           <h2 className="text-2xl font-bold text-foreground">Welcome back</h2>

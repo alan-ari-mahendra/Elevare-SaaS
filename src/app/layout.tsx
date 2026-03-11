@@ -10,7 +10,7 @@ import { NextAuthProvider } from "@/contexts/sessionProvider";
 import { ToasterProvider } from "@/providers/toaster-provider";
 
 export const metadata: Metadata = {
-  title: "ProjectFlow - Modern Project Management",
+  title: "Elevare - Modern Project Management",
   description: "A comprehensive project management tool for modern teams",
   generator: "v0.app",
 };

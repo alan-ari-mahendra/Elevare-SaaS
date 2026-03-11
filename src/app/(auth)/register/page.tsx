@@ -91,7 +91,7 @@ export default function RegisterPage() {
 
       toast({
         title: "Account created",
-        description: "Welcome to ProjectFlow!",
+        description: "Welcome to Elevare!",
       });
       router.push("/dashboard");
     } catch (error: any) {
@@ -121,14 +121,14 @@ export default function RegisterPage() {
               <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold text-foreground">
-              ProjectFlow
+              Elevare
             </span>
           </Link>
           <h2 className="text-2xl font-bold text-foreground">
             Create your account
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Get started with your free ProjectFlow account
+            Get started with your free Elevare account
           </p>
         </div>
 
