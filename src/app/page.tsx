@@ -100,7 +100,7 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-7xl">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 tes">
               <Card className="relative overflow-hidden border-border/50">
                 <CardHeader>
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
