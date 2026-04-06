@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TaskModal } from "@/components/task/task-modal";
-import { ArrowLeft, Calendar, Edit } from "lucide-react";
+import { ArrowLeft, Calendar, Edit, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getStatusColor } from "@/lib/utils";
@@ -17,7 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Kanban from "@/components/project/kanban";
 import { useProject } from "@/hooks/useProject";
 import { updateTask } from "@/services/tasks";
-import { useTaskOperations } from "@/hooks/useTaskOperations"; // Import updateTask
+import { useTaskOperations } from "@/hooks/useTaskOperations";
+import { TaskBreakdownDialog } from "@/components/ai/task-breakdown-dialog";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -48,6 +50,8 @@ export default function ProjectDetailPage() {
 const {
   handleTaskUpdate
 } = useTaskOperations()
+
+  const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
 
   if (!project && !isLoading) {
     return (
@@ -135,6 +139,10 @@ const {
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={() => setIsBreakdownOpen(true)}>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Generate Tasks
+          </Button>
           <Link href={`/projects/${project!.id}/edit`}>
             <Button variant="outline">
               <Edit className="mr-2 h-4 w-4" />
@@ -188,6 +196,14 @@ const {
         task={editingTask}
         projectId={projectId}
         saveOnSuccess={handleTaskSaved}
+      />
+
+      <TaskBreakdownDialog
+        open={isBreakdownOpen}
+        onOpenChange={setIsBreakdownOpen}
+        projectId={projectId}
+        projectName={project!.name}
+        onTasksAdded={handleTaskSaved}
       />
     </div>
   );
