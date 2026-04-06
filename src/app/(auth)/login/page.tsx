@@ -35,7 +35,8 @@ export default function LoginPage() {
       email,
       password,
     });
-
+    console.log("38 res")
+    console.log(res)
     setIsLoading(false);
 
     if (res?.error) {

@@ -21,8 +21,11 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-import { mockUser } from "@/lib/mock-data";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import {
+  userDisplayInitials,
+  userDisplayName,
+} from "@/lib/user-display";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -33,12 +36,23 @@ const navigation = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { state, toggleSidebar } = useSidebar();
+  const { state } = useSidebar();
+  const { data: session, status } = useSession();
+
+  const displayName =
+    status === "loading"
+      ? "…"
+      : userDisplayName(session?.user?.name, session?.user?.email);
+  const displayEmail =
+    status === "loading" ? "…" : session?.user?.email ?? "";
+  const profileImage = session?.user?.image?.trim();
+  const initials = userDisplayInitials(
+    session?.user?.name,
+    session?.user?.email
+  );
 
   const handleLogout = () => {
-    // signOut();
-    console.log("Logging out...");
-    // window.location.href = "/login";
+    void signOut({ callbackUrl: "/login" });
   };
 
   return (
@@ -80,23 +94,17 @@ export function AppSidebar() {
           {state === "expanded" && (
             <div className="flex items-center space-x-3 px-2 py-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage
-                  src={mockUser.avatar_url || "/placeholder.svg"}
-                  alt={mockUser.name}
-                />
-                <AvatarFallback>
-                  {mockUser.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
+                {profileImage ? (
+                  <AvatarImage src={profileImage} alt={displayName} />
+                ) : null}
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
-                  {mockUser.name}
+                  {displayName}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {mockUser.email}
+                  {displayEmail}
                 </p>
               </div>
             </div>
