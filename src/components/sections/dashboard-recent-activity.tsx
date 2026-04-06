@@ -3,6 +3,7 @@ import { Activity, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Activity as ActivityPrisma } from "@prisma/client";
 type Props = {
   isLoading: boolean;
@@ -60,14 +61,16 @@ export function DashboardRecentActivity({
         )}
 
         <div className="pt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-center"
-          >
-            View all activity
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <Link href="/tasks">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-center"
+            >
+              View all activity
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>

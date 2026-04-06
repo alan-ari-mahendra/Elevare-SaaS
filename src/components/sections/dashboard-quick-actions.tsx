@@ -30,13 +30,13 @@ export function DashboardQuickActions() {
               <span>View Projects</span>
             </Button>
           </Link>
-          <Link href="/profile">
+          <Link href="/settings">
             <Button
               variant="outline"
               className="h-20 flex-col space-y-2 w-full bg-transparent"
             >
               <Users className="h-6 w-6" />
-              <span>Team Settings</span>
+              <span>Settings</span>
             </Button>
           </Link>
         </div>

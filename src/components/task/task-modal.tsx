@@ -110,8 +110,6 @@ export function TaskModal({
         updatedAt: savedTask.updatedAt
       };
 
-      console.log("Data yang akan dikirim ke onSave:", taskData);
-
       toast({
         title: task ? "Task updated" : "Task created",
         description: `"${formData.title}" has been ${

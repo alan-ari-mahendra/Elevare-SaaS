@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
     if (!title || !projectId) {
       return NextResponse.json(
-        { error: "Title & projectId wajib diisi" },
+        { error: "Title and projectId are required" },
         { status: 400 }
       );
     }
@@ -69,7 +69,6 @@ export async function POST(req: Request) {
         position: nextPosition,
       },
     });
-    console.log("Created task:", task);
     activityLog({
       action: `Created Task`,
       details: `Created Task "${title}"`,

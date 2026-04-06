@@ -8,7 +8,7 @@ import {
 } from '@/services/projects';
 import { deleteTask, getTasks, updateTask } from "@/services/tasks";
 import { Project, Task, User } from "@prisma/client";
-import { fetchUsers } from "@/services/users";
+import { fetchCurrentUser } from "@/services/users";
 
 export function useProject() {
   const params = useParams();
@@ -32,17 +32,13 @@ export function useProject() {
     try {
       const projectData = await getProjectById(projectId);
       setProject(projectData);
-      console.log("Project data:", projectData);
-      const [allTasks, allUsers] = await Promise.all([
+      const [allTasks, currentUser] = await Promise.all([
         getTasks(),
-        fetchUsers().catch(error => {
-          console.error("Error fetching users:", error);
-          return [];
-        })
+        fetchCurrentUser()
       ]);
 
       setTasks(allTasks.filter((task: Task) => task.projectId === projectId));
-      setUsers(allUsers);
+      setUsers(currentUser ? [currentUser] : []);
     } catch (error) {
       console.error(error);
       toast({

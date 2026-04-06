@@ -50,7 +50,6 @@ export default function TasksPage() {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
             setProjects(data);
-            console.log("project from fetch projetc", data);
         } catch (err) {
             console.error("Error fetching projects:", err);
             toast({
@@ -95,7 +94,6 @@ export default function TasksPage() {
             setTasks(transformedTasks);
         } catch (err) {
             console.error("Error fetching tasks:", err);
-            console.error("Error fetching tasks:", error);
             setError(err instanceof Error ? err.message : "Failed to fetch tasks");
             toast({
                 title: "Error",
@@ -109,8 +107,6 @@ export default function TasksPage() {
 
     const handleDragStart = (event: DragStartEvent) => {
         if (!isReorderMode) return;
-
-        console.log('Drag started for task:', event.active.id);
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -118,10 +114,7 @@ export default function TasksPage() {
 
         const {active, over} = event;
 
-        console.log('Drag ended:', {activeId: active.id, overId: over?.id});
-
         if (!over || active.id === over.id) {
-            console.log('No reordering needed: either dropped outside or dropped on itself.');
             return;
         }
 
@@ -139,8 +132,6 @@ export default function TasksPage() {
             setTasks(tasksWithNewPositions);
 
             handleReorderTasks(tasksWithNewPositions);
-
-            console.log(`Task moved from position ${activeIndex + 1} to ${overIndex + 1}`);
         }
     };
 
@@ -457,7 +448,7 @@ export default function TasksPage() {
                 onOpenChange={setIsTaskModalOpen}
                 task={editingTask}
                 projectId={projects[0]?.id || ""}
-                // onSave={handleSaveTask}
+                saveOnSuccess={fetchTasks}
             />
         </div>
     );

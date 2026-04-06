@@ -53,8 +53,7 @@ export function StatisticsSection({
         <CardContent>
           <div className="text-2xl font-bold">{totalProjects}</div>
           <p className="text-xs text-muted-foreground">
-            <span className="text-secondary font-medium">+2</span> from
-            last month
+            {totalProjects} total across all statuses
           </p>
         </CardContent>
       </Card>
@@ -66,8 +65,7 @@ export function StatisticsSection({
         <CardContent>
           <div className="text-2xl font-bold">{completedProjects}</div>
           <p className="text-xs text-muted-foreground">
-            <span className="text-secondary font-medium">+1</span> from
-            last month
+            {completedTasks} tasks completed
           </p>
         </CardContent>
       </Card>
@@ -96,7 +94,7 @@ export function StatisticsSection({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {Math.round((completedTasks / totalTasks) * 100)}%
+            {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%
           </div>
           <p className="text-xs text-muted-foreground">
             {completedTasks} of {totalTasks} tasks completed

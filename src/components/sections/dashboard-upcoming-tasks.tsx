@@ -101,7 +101,7 @@ export function DashboardUpcomingTasks({
         )}
 
         <div className="pt-2">
-          <Link href="/projects">
+          <Link href="/tasks">
             <Button
               variant="ghost"
               size="sm"

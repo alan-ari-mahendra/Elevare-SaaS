@@ -240,7 +240,8 @@ export default function ProfileSettingsPage() {
                                     <Upload className="h-4 w-4 mr-2"/>
                                     Change Photo
                                 </Button>
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm"
+                                    onClick={() => toast.info('Remove photo feature coming soon.')}>
                                     Remove Photo
                                 </Button>
                                 <p className="text-xs text-muted-foreground">Recommended: Square image, at least
