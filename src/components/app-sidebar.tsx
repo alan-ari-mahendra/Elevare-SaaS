@@ -18,6 +18,7 @@ import {
   Home,
   FolderOpen,
   CheckSquare,
+  CalendarDays,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -31,6 +32,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Projects", href: "/projects", icon: FolderOpen },
   { name: "Tasks", href: "/tasks", icon: CheckSquare },
+  { name: "Calendar", href: "/calendar", icon: CalendarDays },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

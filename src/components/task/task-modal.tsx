@@ -23,6 +23,7 @@ interface TaskModalProps {
   onOpenChange: (open: boolean) => void;
   task?: Task;
   projectId: string;
+  defaultDueDate?: Date;
   saveOnSuccess?: () => void;
 }
 
@@ -31,6 +32,7 @@ export function TaskModal({
                             onOpenChange,
                             task,
                             projectId,
+                            defaultDueDate,
                             saveOnSuccess
                           }: TaskModalProps) {
   const { toast } = useToast();
@@ -41,21 +43,21 @@ export function TaskModal({
     description: task?.description || "",
     status: task?.status || "todo",
     priority: task?.priority || "medium",
-    dueDate: task?.dueDate ? new Date(task.dueDate) : undefined,
+    dueDate: task?.dueDate ? new Date(task.dueDate) : defaultDueDate,
     projectId: task?.projectId || projectId
   });
   useEffect(() => {
-    if (task) {
+    if (open) {
       setFormData({
-        title: task.title || "",
-        description: task.description || "",
-        status: task.status || "todo",
-        priority: task.priority || "medium",
-        dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-        projectId: task.projectId || projectId
+        title: task?.title || "",
+        description: task?.description || "",
+        status: task?.status || "todo",
+        priority: task?.priority || "medium",
+        dueDate: task?.dueDate ? new Date(task.dueDate) : defaultDueDate,
+        projectId: task?.projectId || projectId,
       });
     }
-  }, [task, projectId]);
+  }, [open, task, projectId, defaultDueDate]);
 
   const handleInputChange = (
     field: string,

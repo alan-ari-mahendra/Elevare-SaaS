@@ -25,7 +25,7 @@ const DEMO_ADMIN_PASSWORD = "password";
 export default function LoginPage() {
   const [email, setEmail] = useState(DEMO_ADMIN_EMAIL);
   const [password, setPassword] = useState(DEMO_ADMIN_PASSWORD);
-  const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
