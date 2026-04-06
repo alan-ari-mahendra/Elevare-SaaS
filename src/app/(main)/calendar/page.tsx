@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getProjects } from "@/services/projects";
-import { getTasks } from "@/services/tasks";
+import { getTasks, updateTask } from "@/services/tasks";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import { TaskModal } from "@/components/task/task-modal";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -25,6 +26,7 @@ export default function CalendarPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -66,6 +68,41 @@ export default function CalendarPage() {
     setSelectedTask(undefined);
     setSelectedDate(date);
     setIsModalOpen(true);
+  };
+
+  const handleTaskDrop = async (taskId: string, newDate: Date) => {
+    // Optimistic update
+    const previous = tasks.map((t) => ({ ...t }));
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId ? { ...t, dueDate: newDate } : t
+      )
+    );
+
+    try {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      await updateTask(taskId, {
+        title: task.title,
+        description: task.description ?? undefined,
+        status: task.status,
+        priority: task.priority,
+        dueDate: newDate.toISOString(),
+        projectId: task.projectId,
+      });
+      toast({
+        title: "Due date updated",
+        description: `Moved to ${newDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+      });
+    } catch {
+      // Roll back on failure
+      setTasks(previous);
+      toast({
+        title: "Failed to update",
+        description: "Could not reschedule the task. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const monthLabel = currentDate.toLocaleDateString("en-US", {
@@ -143,6 +180,7 @@ export default function CalendarPage() {
         isLoading={isLoading}
         onTaskClick={handleTaskClick}
         onDayClick={handleDayClick}
+        onTaskDrop={handleTaskDrop}
       />
 
       {/* Task Modal */}

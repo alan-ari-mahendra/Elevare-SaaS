@@ -3,10 +3,12 @@
 import { Task, Project } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import { useDroppable } from "@dnd-kit/core";
 import { TaskChip } from "./task-chip";
 
 interface DayCellProps {
   date: Date | null;
+  cellIndex: number;
   today: Date;
   currentMonth: number;
   tasks: Task[];
@@ -17,6 +19,7 @@ interface DayCellProps {
 
 export function DayCell({
   date,
+  cellIndex,
   today,
   currentMonth,
   tasks,
@@ -24,6 +27,12 @@ export function DayCell({
   onTaskClick,
   onDayClick,
 }: DayCellProps) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: date ? date.toDateString() : `empty-${cellIndex}`,
+    disabled: !date,
+    data: { date },
+  });
+
   if (!date) {
     return (
       <div className="min-h-[110px] bg-muted/10 border-b border-r border-border/20 last:border-r-0" />
@@ -50,10 +59,14 @@ export function DayCell({
 
   return (
     <div
+      ref={setNodeRef}
       className={cn(
-        "min-h-[110px] p-1.5 border-b border-r border-border/30 cursor-pointer group transition-colors hover:bg-muted/20",
+        "min-h-[110px] p-1.5 border-b border-r border-border/30 cursor-pointer group transition-colors",
         !isCurrentMonth && "opacity-40",
-        isToday && "bg-primary/5"
+        isToday && "bg-primary/5",
+        isOver
+          ? "bg-primary/10 border-primary/40 ring-1 ring-inset ring-primary/30"
+          : "hover:bg-muted/20"
       )}
       onClick={() => onDayClick(date)}
     >
