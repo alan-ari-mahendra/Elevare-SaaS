@@ -18,9 +18,13 @@ import {
 import { BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+/** Kredensial admin praterisi untuk demo/showcase ke klien & tester. */
+const DEMO_ADMIN_EMAIL = "admin@gmail.com";
+const DEMO_ADMIN_PASSWORD = "password";
+
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(DEMO_ADMIN_EMAIL);
+  const [password, setPassword] = useState(DEMO_ADMIN_PASSWORD);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
