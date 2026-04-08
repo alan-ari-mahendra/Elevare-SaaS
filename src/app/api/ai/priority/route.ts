@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getGeminiModel } from "@/lib/gemini";
-
-function extractJSON(text: string): string {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error(`No JSON found in response: ${text.slice(0, 200)}`);
-  return match[0];
-}
+import { groqGenerateJSON } from "@/lib/groq";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -24,15 +18,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const model = getGeminiModel();
-
-  const prompt = `You are a task management assistant. Based on the task title and description, suggest the appropriate priority level.
+  const prompt = `Based on this task, suggest the appropriate priority level.
 
 Task Title: ${title}
 Task Description: ${description || "No description provided"}
 
-You MUST respond with ONLY a raw JSON object. No markdown, no code fences, no explanation. Just the JSON:
-{"priority": "medium", "reason": "one sentence explanation"}
+Respond with JSON in this exact format:
+{"priority": "high" | "medium" | "low", "reason": "one sentence explanation"}
 
 Priority guidelines:
 - high: urgent, blocking other work, critical deadlines, production/security issues
@@ -40,13 +32,10 @@ Priority guidelines:
 - low: nice-to-have, minor changes, non-blocking tasks`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-
+    const text = await groqGenerateJSON(prompt);
     console.log("[AI Priority] Raw response:", text.slice(0, 200));
 
-    const jsonStr = extractJSON(text);
-    const parsed = JSON.parse(jsonStr);
+    const parsed = JSON.parse(text);
 
     if (!["high", "medium", "low"].includes(parsed.priority)) {
       throw new Error(`Invalid priority value: ${parsed.priority}`);
@@ -61,9 +50,8 @@ Priority guidelines:
     return NextResponse.json(
       {
         error: "Failed to generate suggestion",
-        detail: process.env.NODE_ENV === "development"
-          ? String(err)
-          : undefined,
+        detail:
+          process.env.NODE_ENV === "development" ? String(err) : undefined,
       },
       { status: 500 }
     );

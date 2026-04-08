@@ -39,7 +39,7 @@ export function DashboardRecentActivity({
               <Skeleton className="h-3 w-1/2" />
             </div>
           ))
-        ) : (
+        ) : recentActivity.length > 0 ? (
           <>
             {recentActivity.map((activity) => (
               <div key={activity.id} className="flex items-start space-x-3">
@@ -58,6 +58,15 @@ export function DashboardRecentActivity({
               </div>
             ))}
           </>
+        ) : (
+          <div className="text-center py-6">
+            <p className="text-sm text-muted-foreground">
+              No recent activity yet
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Create a project or task to get started
+            </p>
+          </div>
         )}
 
         <div className="pt-2">

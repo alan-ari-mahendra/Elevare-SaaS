@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getGeminiModel } from "@/lib/gemini";
+import { groqGenerateJSON } from "@/lib/groq";
 
 export interface AITask {
   title: string;
   priority: "high" | "medium" | "low";
   description: string;
-}
-
-function extractJSON(text: string): string {
-  // Try to find a JSON object anywhere in the response
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error(`No JSON found in response: ${text.slice(0, 200)}`);
-  return match[0];
 }
 
 export async function POST(req: Request) {
@@ -31,15 +24,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const model = getGeminiModel();
-
-  const prompt = `You are a project management assistant. Break down the following project goal into clear, actionable tasks.
+  const prompt = `Break down this project goal into clear, actionable tasks.
 
 Project Name: ${projectName || "Untitled Project"}
 Goal: ${goal}
 
-You MUST respond with ONLY a raw JSON object. No markdown, no code fences, no explanation. Just the JSON:
-{"tasks": [{"title": "task title", "priority": "high", "description": "one sentence description"}]}
+Respond with JSON in this exact format:
+{"tasks": [{"title": "task title", "priority": "high" | "medium" | "low", "description": "one sentence description"}]}
 
 Rules:
 - Generate between 4 and 8 tasks
@@ -50,16 +41,15 @@ Rules:
 - Be specific to the project goal, not generic`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-
+    const text = await groqGenerateJSON(prompt);
     console.log("[AI Breakdown] Raw response:", text.slice(0, 300));
 
-    const jsonStr = extractJSON(text);
-    const parsed = JSON.parse(jsonStr);
+    const parsed = JSON.parse(text);
 
     if (!Array.isArray(parsed.tasks)) {
-      throw new Error(`Invalid response structure. Got: ${JSON.stringify(parsed).slice(0, 200)}`);
+      throw new Error(
+        `Invalid response structure. Got: ${JSON.stringify(parsed).slice(0, 200)}`
+      );
     }
 
     const tasks: AITask[] = parsed.tasks.map((t: AITask) => ({
@@ -76,9 +66,8 @@ Rules:
     return NextResponse.json(
       {
         error: "Failed to generate tasks",
-        detail: process.env.NODE_ENV === "development"
-          ? String(err)
-          : undefined,
+        detail:
+          process.env.NODE_ENV === "development" ? String(err) : undefined,
       },
       { status: 500 }
     );

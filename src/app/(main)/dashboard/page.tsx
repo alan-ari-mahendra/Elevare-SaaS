@@ -11,6 +11,7 @@ import { DashboardQuickActions } from "@/components/sections/dashboard-quick-act
 import { DashboardProjectOverview } from "@/components/sections/dashboard-project-overview";
 import { DashboardRecentActivity } from "@/components/sections/dashboard-recent-activity";
 import { DashboardUpcomingTasks } from "@/components/sections/dashboard-upcoming-tasks";
+import { DashboardDeadlineReminder } from "@/components/sections/dashboard-deadline-reminder";
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -49,9 +50,12 @@ export default function DashboardPage() {
           Welcome back, {user && user.name}
         </h1>
         <p className="text-muted-foreground">
-          Here's what's happening with your projects today.
+          Here&apos;s what&apos;s happening with your projects today.
         </p>
       </div>
+
+      {/* Deadline Reminder */}
+      <DashboardDeadlineReminder tasks={tasks} isLoading={isLoading} />
 
       {/* Statistics Cards */}
       <StatisticsSection

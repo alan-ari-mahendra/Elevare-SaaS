@@ -19,13 +19,21 @@ export function DashboardUpcomingTasks({
                                          tasks,
                                          projects
                                        }: Props) {
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+  const weekFromNow = new Date(
+    startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000
+  );
+
   const upcomingTasks = tasks
     .filter((task) => {
-      if (!task.dueDate) return false;
+      if (!task.dueDate || task.status === "done") return false;
       const dueDate = new Date(task.dueDate);
-      const now = new Date();
-      const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      return dueDate >= now && dueDate <= weekFromNow;
+      return dueDate >= startOfToday && dueDate < weekFromNow;
     })
     .sort(
       (a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
@@ -61,14 +69,17 @@ export function DashboardUpcomingTasks({
                     key={task.id}
                     className="flex items-center justify-between space-x-3"
                   >
-                    <div className="flex-1 space-y-1">
+                    <div className="flex-1 space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-foreground">
+                        <Link
+                          href={`/tasks/${task.id}`}
+                          className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
+                        >
                           {task.title}
-                        </p>
+                        </Link>
                         <Badge
                           variant={getPriorityColor(task.priority)}
-                          className="text-xs"
+                          className="text-xs flex-shrink-0"
                         >
                           {task.priority}
                         </Badge>
