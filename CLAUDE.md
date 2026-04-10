@@ -92,3 +92,8 @@ Required in `.env`:
 - Client components are marked with `"use client"`
 - Prettier: 2-space indent, no tabs
 - Build config ignores ESLint and TypeScript errors (`next.config.mjs`)
+
+## Behavior Rules
+- **Always ask before making important decisions** — do not assume or decide 
+  unilaterally on anything that affects architecture, data models, file structure, 
+  or business logic. When in doubt, ask the user first.
