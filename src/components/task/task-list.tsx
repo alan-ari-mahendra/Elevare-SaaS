@@ -20,7 +20,7 @@ type Props = {
   isReorderMode: boolean;
   onDragEnd: any;
   onDragStart: any;
-  onStatusChange: (taskId: string, checked: boolean) => void;
+  onStatusChange: (taskId: string, newStatus: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string, taskTitle: string) => void;
 }
