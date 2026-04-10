@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TaskActionDropdown } from "@/components/task/task-action-dropdown";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { Calendar } from "lucide-react";
 import { Task } from "@prisma/client";
 import { getPriorityColor, getStatusColor } from "@/lib/utils";
 
@@ -21,18 +20,21 @@ interface TaskItemProps {
 
 export function TaskItem({ task, onStatusChange, onEdit, onDelete }: TaskItemProps) {
   return (
-    <div className="flex items-center space-x-4 p-4 border border-border/50 rounded-lg hover:border-primary/50 transition-colors">
+    <div className="group flex items-center gap-3 px-4 py-3 border border-border/50 rounded-lg hover:border-primary/30 hover:bg-muted/30 transition-all">
       <Checkbox
         checked={task.status === "done"}
         onCheckedChange={(checked) =>
           onStatusChange(task.id, checked as boolean)
         }
+        className="shrink-0"
       />
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center space-x-2">
-          <Link href={`/tasks/${task.id}`} className="hover:underline">
+
+      {/* Main content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <Link href={`/tasks/${task.id}`} className="hover:underline min-w-0">
             <h4
-              className={`font-medium ${
+              className={`text-sm font-medium truncate ${
                 task.status === "done"
                   ? "line-through text-muted-foreground"
                   : "text-foreground"
@@ -41,40 +43,26 @@ export function TaskItem({ task, onStatusChange, onEdit, onDelete }: TaskItemPro
               {task.title}
             </h4>
           </Link>
-          <Badge
-            variant={getPriorityColor(task.priority)}
-            className="text-xs"
-          >
+          <Badge variant={getPriorityColor(task.priority)} className="text-[10px] shrink-0">
             {task.priority}
           </Badge>
-          <Badge
-            variant={getStatusColor(task.status)}
-            className="text-xs"
-          >
+          <Badge variant={getStatusColor(task.status)} className="text-[10px] shrink-0">
             {task.status.replace("_", " ")}
           </Badge>
         </div>
-        {task.description && (
-          <p className="text-sm text-muted-foreground">
-            {task.description}
+        {task.dueDate && (
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+            <Calendar className="h-3 w-3" />
+            Due {format(new Date(task.dueDate), "MMM d")}
           </p>
         )}
-        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-          <span>
-            Created {format(new Date(task.createdAt), "MMM d")}
-          </span>
-          {task.dueDate && (
-            <div className="flex items-center">
-              <Calendar className="mr-1 h-3 w-3" />
-              Due {format(new Date(task.dueDate), "MMM d")}
-            </div>
-          )}
-        </div>
       </div>
-      <div className="flex items-center space-x-2">
+
+      {/* Actions — visible on hover */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         <Link href={`/tasks/${task.id}`}>
-          <Button variant="ghost" size="sm">
-            <ExternalLink className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-7 w-7">
+            <ExternalLink className="h-3.5 w-3.5" />
           </Button>
         </Link>
         <TaskActionDropdown
