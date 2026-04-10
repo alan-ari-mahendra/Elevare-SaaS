@@ -12,5 +12,6 @@ export const config = {
     "/projects/:path*",
     "/tasks/:path*",
     "/settings/:path*",
+    "/calendar",
   ],
 };

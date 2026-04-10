@@ -1,22 +1,21 @@
 "use client";
 
 import type React from "react";
-
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
 } from "@/components/ui/dialog";
 import { Save } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import type { Project } from "@/lib/types";
-import { TaskForm } from "@/components/task-form";
+import { TaskForm } from "@/components/task/task-form";
 import { Task } from "@prisma/client";
 
 interface TaskModalProps {
@@ -24,28 +23,41 @@ interface TaskModalProps {
   onOpenChange: (open: boolean) => void;
   task?: Task;
   projectId: string;
-  onSave: (taskData: Partial<Task>) => void;
+  defaultDueDate?: Date;
+  saveOnSuccess?: () => void;
 }
 
 export function TaskModal({
-  open,
-  onOpenChange,
-  task,
-  projectId,
-  onSave,
-}: TaskModalProps) {
+                            open,
+                            onOpenChange,
+                            task,
+                            projectId,
+                            defaultDueDate,
+                            saveOnSuccess
+                          }: TaskModalProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [formData, setFormData] = useState({
     title: task?.title || "",
     description: task?.description || "",
     status: task?.status || "todo",
     priority: task?.priority || "medium",
-    dueDate: task?.dueDate ? new Date(task.dueDate) : undefined,
-    projectId: task?.projectId || projectId,
+    dueDate: task?.dueDate ? new Date(task.dueDate) : defaultDueDate,
+    projectId: task?.projectId || projectId
   });
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        title: task?.title || "",
+        description: task?.description || "",
+        status: task?.status || "todo",
+        priority: task?.priority || "medium",
+        dueDate: task?.dueDate ? new Date(task.dueDate) : defaultDueDate,
+        projectId: task?.projectId || projectId,
+      });
+    }
+  }, [open, task, projectId, defaultDueDate]);
 
   const handleInputChange = (
     field: string,
@@ -54,15 +66,10 @@ export function TaskModal({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    handleInputChange("dueDate", date);
-    setDatePickerOpen(false);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log("Form submitted with data:", { formData });
+
     try {
       const apiUrl = task ? `/api/tasks/${task.id}` : "/api/tasks";
       const method = task ? "PUT" : "POST";
@@ -70,7 +77,7 @@ export function TaskModal({
       const response = await fetch(apiUrl, {
         method,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
         credentials: "include",
         body: JSON.stringify({
@@ -79,8 +86,8 @@ export function TaskModal({
           status: formData.status,
           priority: formData.priority,
           dueDate: formData.dueDate ? formData.dueDate.toISOString() : null,
-          projectId: formData.projectId,
-        }),
+          projectId: formData.projectId
+        })
       });
 
       if (!response.ok) {
@@ -92,24 +99,28 @@ export function TaskModal({
 
       const savedTask = await response.json();
 
-      // Transform data untuk sesuai dengan tipe Task
-      const taskData = {
-        ...savedTask,
-        dueDate: savedTask.dueDate,
+      const taskData: Partial<Task> = {
+        id: savedTask.id,
+        title: savedTask.title,
+        description: savedTask.description,
+        status: savedTask.status,
+        priority: savedTask.priority,
+        dueDate: savedTask.dueDate ? new Date(savedTask.dueDate) : null,
         projectId: savedTask.projectId,
-        user_id: savedTask.userId,
-        created_at: savedTask.createdAt,
-        updated_at: savedTask.updatedAt,
+        userId: savedTask.userId,
+        createdAt: savedTask.createdAt,
+        updatedAt: savedTask.updatedAt
       };
-
-      onSave(taskData);
 
       toast({
         title: task ? "Task updated" : "Task created",
         description: `"${formData.title}" has been ${
           task ? "updated" : "created"
-        } successfully.`,
+        } successfully.`
       });
+      if (saveOnSuccess) {
+        saveOnSuccess();
+      }
 
       onOpenChange(false);
 
@@ -120,7 +131,7 @@ export function TaskModal({
           status: "todo",
           priority: "medium",
           dueDate: undefined,
-          projectId: projectId,
+          projectId: projectId
         });
       }
     } catch (error) {
@@ -131,38 +142,33 @@ export function TaskModal({
           error instanceof Error
             ? error.message
             : "Failed to save task. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const statusOptions = [
-    { value: "todo", label: "To Do" },
-    { value: "in_progress", label: "In Progress" },
-    { value: "done", label: "Done" },
-  ];
-
-  const priorityOptions = [
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
-  ];
-
   const getProjects = useCallback(async () => {
     try {
       const responseProjects = await fetch("/api/projects", {
         method: "GET",
-        credentials: "include",
+        credentials: "include"
       });
       if (!responseProjects.ok)
         throw new Error(`HTTP error! status: ${responseProjects.status}`);
 
       const projects = await responseProjects.json();
       setProjects(projects);
-    } catch (error) {}
-  }, []);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load projects. Please refresh the page.",
+        variant: "destructive"
+      });
+    }
+  }, [toast]);
 
   useEffect(() => {
     getProjects();

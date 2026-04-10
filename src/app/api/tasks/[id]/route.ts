@@ -65,6 +65,8 @@ export async function PUT(
     action: `Updated Task`,
     details,
     userId: session.user.id,
+    projectId: updated.projectId,
+    taskId: updated.id,
   });
 
   return NextResponse.json(updated);
@@ -95,6 +97,7 @@ export async function DELETE(
     action: `Deleted Task`,
     details: `Deleted task "${existing.title}"`,
     userId: session.user.id,
+    projectId: existing.projectId,
   });
 
   return NextResponse.json({ message: "Task deleted" });

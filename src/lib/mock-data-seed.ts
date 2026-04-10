@@ -22,6 +22,12 @@ async function main() {
             email: "john@example.com",
             password: hashedPassword,
             avatarUrl: "/professional-headshot.png",
+            bio: "Product manager passionate about building great user experiences.",
+            location: "San Francisco, CA",
+            website: "https://johndoe.dev",
+            company: "TechCorp Inc.",
+            timezone: "America/Los_Angeles",
+            language: "en",
         },
     })
 

@@ -4,12 +4,13 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 import "./globals.css";
 import { NextAuthProvider } from "@/contexts/sessionProvider";
+import { ToasterProvider } from "@/providers/toaster-provider";
 
 export const metadata: Metadata = {
-  title: "ProjectFlow - Modern Project Management",
+  title: "Elevare - Modern Project Management",
   description: "A comprehensive project management tool for modern teams",
   generator: "v0.app",
 };
@@ -33,6 +34,7 @@ export default function RootLayout({
           >
             <NextAuthProvider>{children}</NextAuthProvider>
           </ThemeProvider>
+          <ToasterProvider/>
         </Suspense>
         <Analytics />
       </body>
