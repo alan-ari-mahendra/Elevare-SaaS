@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { Task } from "@prisma/client";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ArrowRight, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -15,15 +14,12 @@ interface Props {
 export function DashboardDeadlineReminder({ tasks, isLoading }: Props) {
   if (isLoading) {
     return (
-      <Card className="p-4">
-        <div className="flex items-start gap-3">
+      <div className="rounded-xl border border-border/50 p-4">
+        <div className="flex items-center gap-3">
           <Skeleton className="h-5 w-5 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-3 w-64" />
-          </div>
+          <Skeleton className="h-4 w-48" />
         </div>
-      </Card>
+      </div>
     );
   }
 
@@ -45,139 +41,98 @@ export function DashboardDeadlineReminder({ tasks, isLoading }: Props) {
     return d >= startOfToday && d < endOfToday;
   });
 
-  // All clear state
+  // All clear
   if (overdueTasks.length === 0 && dueTodayTasks.length === 0) {
     return (
-      <Card className="border-emerald-200/60 bg-emerald-50/50 dark:border-emerald-900/60 dark:bg-emerald-950/20 p-4">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
-              You&apos;re all caught up!
-            </p>
-            <p className="text-xs text-emerald-700 dark:text-emerald-300">
-              No tasks due today or overdue. Great work.
-            </p>
-          </div>
-        </div>
-      </Card>
+      <div className="flex items-center gap-3 rounded-xl border-l-4 border-l-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-200/40 dark:border-emerald-800/40 px-4 py-3">
+        <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+        <p className="text-sm text-emerald-700 dark:text-emerald-300">
+          <span className="font-medium">All caught up!</span>
+          <span className="text-emerald-600/70 dark:text-emerald-400/70"> — No tasks due today or overdue.</span>
+        </p>
+      </div>
     );
   }
 
   const hasOverdue = overdueTasks.length > 0;
-  const previewTasks = [...dueTodayTasks, ...overdueTasks].slice(0, 3);
+  const previewTasks = [...overdueTasks, ...dueTodayTasks].slice(0, 3);
   const moreCount =
     dueTodayTasks.length + overdueTasks.length - previewTasks.length;
 
+  const accentBorder = hasOverdue ? "border-l-red-500" : "border-l-amber-500";
+  const accentBg = hasOverdue
+    ? "bg-red-500/5 dark:bg-red-500/10 border-red-200/40 dark:border-red-800/40"
+    : "bg-amber-500/5 dark:bg-amber-500/10 border-amber-200/40 dark:border-amber-800/40";
+  const accentIcon = hasOverdue
+    ? "text-red-500"
+    : "text-amber-500";
+  const accentTitle = hasOverdue
+    ? "text-red-700 dark:text-red-300"
+    : "text-amber-700 dark:text-amber-300";
+  const accentText = hasOverdue
+    ? "text-red-600/70 dark:text-red-400/70"
+    : "text-amber-600/70 dark:text-amber-400/70";
+  const accentLink = hasOverdue
+    ? "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+    : "text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300";
+
   return (
-    <Card
-      className={cn(
-        "p-4 border",
-        hasOverdue
-          ? "border-red-200/60 bg-red-50/50 dark:border-red-900/60 dark:bg-red-950/20"
-          : "border-amber-200/60 bg-amber-50/50 dark:border-amber-900/60 dark:bg-amber-950/20"
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0",
-            hasOverdue
-              ? "bg-red-100 dark:bg-red-900/50"
-              : "bg-amber-100 dark:bg-amber-900/50"
+    <div className={cn("rounded-xl border-l-4 border px-4 py-3", accentBorder, accentBg)}>
+      {/* Header line */}
+      <div className="flex items-center gap-2.5">
+        <AlertTriangle className={cn("h-4.5 w-4.5 shrink-0", accentIcon)} />
+        <p className={cn("text-sm font-medium", accentTitle)}>
+          {dueTodayTasks.length > 0 && (
+            <>
+              {dueTodayTasks.length} task{dueTodayTasks.length > 1 ? "s" : ""} due today
+            </>
           )}
-        >
-          <AlertTriangle
-            className={cn(
-              "h-5 w-5",
-              hasOverdue
-                ? "text-red-600 dark:text-red-400"
-                : "text-amber-600 dark:text-amber-400"
-            )}
-          />
-        </div>
-
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p
-              className={cn(
-                "text-sm font-semibold",
-                hasOverdue
-                  ? "text-red-900 dark:text-red-100"
-                  : "text-amber-900 dark:text-amber-100"
-              )}
-            >
-              {dueTodayTasks.length > 0 && (
-                <>
-                  {dueTodayTasks.length} task
-                  {dueTodayTasks.length > 1 ? "s" : ""} due today
-                </>
-              )}
-              {dueTodayTasks.length > 0 && overdueTasks.length > 0 && (
-                <span className="text-muted-foreground font-normal">
-                  {" "}
-                  ·{" "}
-                </span>
-              )}
-              {overdueTasks.length > 0 && (
-                <span className="text-red-700 dark:text-red-300">
-                  {overdueTasks.length} overdue
-                </span>
-              )}
-            </p>
-          </div>
-
-          {/* Task preview list */}
-          <ul
-            className={cn(
-              "space-y-0.5 text-xs",
-              hasOverdue
-                ? "text-red-800/80 dark:text-red-200/80"
-                : "text-amber-800/80 dark:text-amber-200/80"
-            )}
-          >
-            {previewTasks.map((task) => {
-              const isOverdue = new Date(task.dueDate!) < startOfToday;
-              return (
-                <li key={task.id}>
-                  <Link
-                    href={`/tasks/${task.id}`}
-                    className="hover:underline inline-flex items-center gap-1.5"
-                  >
-                    <span className="opacity-60">•</span>
-                    <span className="truncate">{task.title}</span>
-                    {isOverdue && (
-                      <span className="text-[10px] font-medium uppercase tracking-wide text-red-600 dark:text-red-400">
-                        overdue
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-            {moreCount > 0 && (
-              <li className="opacity-70">
-                and {moreCount} more...
-              </li>
-            )}
-          </ul>
-
-          <Link
-            href="/tasks?filter=due-today"
-            className={cn(
-              "inline-flex items-center gap-1 text-xs font-medium hover:underline pt-1",
-              hasOverdue
-                ? "text-red-700 dark:text-red-400"
-                : "text-amber-700 dark:text-amber-400"
-            )}
-          >
-            View all
-            <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
+          {dueTodayTasks.length > 0 && overdueTasks.length > 0 && " · "}
+          {overdueTasks.length > 0 && (
+            <span className="text-red-600 dark:text-red-400">
+              {overdueTasks.length} overdue
+            </span>
+          )}
+        </p>
       </div>
-    </Card>
+
+      {/* Task list */}
+      <div className="mt-2 ml-7 flex flex-col gap-1">
+        {previewTasks.map((task) => {
+          const isOverdue = new Date(task.dueDate!) < startOfToday;
+          return (
+            <Link
+              key={task.id}
+              href={`/tasks/${task.id}`}
+              className={cn("group flex items-center gap-2 text-xs hover:underline", accentText)}
+            >
+              <Clock className="h-3 w-3 shrink-0 opacity-50" />
+              <span className="truncate">{task.title}</span>
+              {isOverdue && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-red-500 dark:text-red-400 shrink-0">
+                  overdue
+                </span>
+              )}
+            </Link>
+          );
+        })}
+        {moreCount > 0 && (
+          <span className={cn("text-xs opacity-60 ml-5", accentText)}>
+            and {moreCount} more...
+          </span>
+        )}
+      </div>
+
+      {/* View all link */}
+      <div className="mt-2 ml-7">
+        <Link
+          href="/tasks?filter=due-today"
+          className={cn("inline-flex items-center gap-1 text-xs font-medium hover:underline", accentLink)}
+        >
+          View all tasks
+          <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
+    </div>
   );
 }
