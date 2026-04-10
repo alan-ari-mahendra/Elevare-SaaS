@@ -79,73 +79,66 @@ const {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Breadcrumb */}
-      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link
-          href="/dashboard"
-          className="hover:text-foreground transition-colors"
-        >
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link href="/dashboard" className="hover:text-foreground transition-colors">
           Dashboard
         </Link>
-        <span>/</span>
-        <Link
-          href="/projects"
-          className="hover:text-foreground transition-colors"
-        >
+        <span className="text-muted-foreground/40">/</span>
+        <Link href="/projects" className="hover:text-foreground transition-colors">
           Projects
         </Link>
-        <span>/</span>
-        <span className="text-foreground">{project!.name}</span>
+        <span className="text-muted-foreground/40">/</span>
+        <span className="text-foreground font-medium truncate">{project!.name}</span>
       </div>
 
       {/* Project Header */}
-      <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-        <div className="space-y-2">
-          <div className="flex items-center space-x-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1.5 min-w-0">
+          <div className="flex items-center gap-2">
             <Link href="/projects">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-foreground truncate">
               {project!.name}
             </h1>
-            <Badge variant={getStatusColor(project!.status)}>
+            <Badge variant={getStatusColor(project!.status)} className="shrink-0">
               {project!.status.replace("_", " ")}
             </Badge>
           </div>
-          <p className="text-muted-foreground max-w-2xl">
-            {project!.description}
-          </p>
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <span>
-              Created {format(new Date(project!.createdAt), "MMM d, yyyy")}
-            </span>
-            <span>•</span>
-            <span>
-              Updated {format(new Date(project!.updatedAt), "MMM d, yyyy")}
-            </span>
+          {project!.description && (
+            <p className="text-sm text-muted-foreground max-w-2xl ml-10">
+              {project!.description}
+            </p>
+          )}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground ml-10">
             {project!.startDate && (
-              <>
-                <span>•</span>
-                <div className="flex items-center">
-                  <Calendar className="mr-1 h-4 w-4" />
-                  Start Date{" "}
-                  {format(new Date(project!.startDate), "MMM d, yyyy")}
-                </div>
-              </>
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {format(new Date(project!.startDate), "MMM d")}
+              </span>
             )}
+            {project!.startDate && project!.endDate && (
+              <span className="text-muted-foreground/40">→</span>
+            )}
+            {project!.endDate && (
+              <span>{format(new Date(project!.endDate), "MMM d")}</span>
+            )}
+            <span className="text-muted-foreground/30">·</span>
+            <span>Updated {format(new Date(project!.updatedAt), "MMM d")}</span>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => setIsBreakdownOpen(true)}>
-            <Sparkles className="mr-2 h-4 w-4" />
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setIsBreakdownOpen(true)}>
+            <Sparkles className="mr-1.5 h-3.5 w-3.5" />
             Generate Tasks
           </Button>
           <Link href={`/projects/${project!.id}/edit`}>
-            <Button variant="outline">
-              <Edit className="mr-2 h-4 w-4" />
+            <Button variant="outline" size="sm">
+              <Edit className="mr-1.5 h-3.5 w-3.5" />
               Edit
             </Button>
           </Link>

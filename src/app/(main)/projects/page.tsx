@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Plus } from "lucide-react";
+import { FolderOpen, Plus } from "lucide-react";
 import ProjectsFilters from "@/components/sections/projects-filters";
 import ProjectCard from "@/components/project/project-card";
 import { useProjects } from "@/hooks/useProjects";
+import { ProjectModal } from "@/components/project/project-modal";
 
 export default function ProjectsPage() {
   const {
@@ -20,8 +21,11 @@ export default function ProjectsPage() {
     filteredProjects,
     tasks,
     handleDeleteProject,
-    handleDuplicateProject
+    handleDuplicateProject,
+    fetchProjectsData,
   } = useProjects();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -33,12 +37,10 @@ export default function ProjectsPage() {
             Manage and track all your projects in one place
           </p>
         </div>
-        <Link href="/projects/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Project
-          </Button>
-        </Link>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Project
+        </Button>
       </div>
 
       {/* Filters and Search */}
@@ -80,28 +82,39 @@ export default function ProjectsPage() {
           ))}
         </div>
       ) : (
-        <Card className="border-border/50">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No projects found
-            </h3>
-            <p className="text-muted-foreground text-center mb-6 max-w-sm">
-              {searchQuery || statusFilter !== "all"
-                ? "Try adjusting your search or filter criteria."
-                : "Get started by creating your first project."}
-            </p>
-            {!searchQuery && statusFilter === "all" && (
-              <Link href="/projects/new">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Project
-                </Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="relative mb-6">
+            <div className="h-20 w-20 rounded-2xl bg-muted/50 flex items-center justify-center">
+              <FolderOpen className="h-10 w-10 text-muted-foreground/40" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+              <Plus className="h-3.5 w-3.5 text-muted-foreground/60" />
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-1">
+            {searchQuery || statusFilter !== "all"
+              ? "No projects match your filters"
+              : "No projects yet"}
+          </h3>
+          <p className="text-sm text-muted-foreground text-center mb-6 max-w-xs">
+            {searchQuery || statusFilter !== "all"
+              ? "Try adjusting your search or filter criteria."
+              : "Create your first project to start organizing your work."}
+          </p>
+          {!searchQuery && statusFilter === "all" && (
+            <Button size="sm" onClick={() => setIsModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Project
+            </Button>
+          )}
+        </div>
       )}
+
+      <ProjectModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onSuccess={fetchProjectsData}
+      />
     </div>
   );
 }

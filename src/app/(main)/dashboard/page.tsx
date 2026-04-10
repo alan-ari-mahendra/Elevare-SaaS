@@ -14,6 +14,7 @@ import { DashboardDeadlineReminder } from "@/components/sections/dashboard-deadl
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, FolderOpen, Settings } from "lucide-react";
+import { ProjectModal } from "@/components/project/project-modal";
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<ActivityType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { user } = useSessionUser();
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
@@ -76,12 +78,10 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Link href="/projects/new">
-            <Button size="sm" className="gap-1.5">
-              <Plus className="h-4 w-4" />
-              New Project
-            </Button>
-          </Link>
+          <Button size="sm" className="gap-1.5" onClick={() => setIsProjectModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            New Project
+          </Button>
           <Link href="/projects">
             <Button variant="outline" size="sm" className="gap-1.5">
               <FolderOpen className="h-4 w-4" />
@@ -116,6 +116,12 @@ export default function DashboardPage() {
 
       {/* Projects Overview */}
       <DashboardProjectOverview isLoading={isLoading} projects={projects} tasks={tasks} />
+
+      <ProjectModal
+        open={isProjectModalOpen}
+        onOpenChange={setIsProjectModalOpen}
+        onSuccess={fetchDashboardData}
+      />
     </div>
   );
 }
