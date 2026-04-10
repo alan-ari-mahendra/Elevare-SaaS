@@ -6,9 +6,16 @@ import { KanbanColumn, KanbanProps } from "@/types/kanban";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
 
 
-const Kanban = ({ tasks, users, onTaskUpdate,onCreateTask }: KanbanProps) => {
+const Kanban = ({ tasks, users, onTaskUpdate, onCreateTask }: KanbanProps) => {
+  const [localTasks, setLocalTasks] = useState(tasks);
+  console.log("localTasks", localTasks);
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
   const columns: KanbanColumn[] = [
     { id: "todo", name: "To Do", color: "#6B7280", status: "todo" },
     { id: "in_progress", name: "In Progress", color: "#F59E0B", status: "in_progress" },
@@ -17,22 +24,32 @@ const Kanban = ({ tasks, users, onTaskUpdate,onCreateTask }: KanbanProps) => {
 
   const usersArray = Array.isArray(users) ? users : [];
 
-  const kanbanTasks = tasks.map(task => ({
-    id: task.id,
-    name: task.title,
-    description: task.description,
-    column: task.status,
-    owner: usersArray.find(user => user.id === task.userId),
-    dueDate: task.dueDate,
-    priority: task.priority,
-    position: task.position,
-    originalTask: task
-  }));
+  const kanbanTasks = useMemo(() => {
+    return localTasks.map(task => ({
+      id: task.id,
+      name: task.title,
+      description: task.description,
+      column: task.status,
+      owner: usersArray.find(user => user.id === task.userId),
+      dueDate: task.dueDate,
+      priority: task.priority,
+      position: task.position,
+      originalTask: task
+    }));
+  }, [localTasks, usersArray]);
 
   const handleTaskUpdate = (taskId: string, newColumnId: string) => {
-    if (onTaskUpdate) {
-      const column = columns.find(col => col.id === newColumnId);
-      if (column) {
+    const column = columns.find(col => col.id === newColumnId);
+    if (column) {
+      setLocalTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId
+            ? { ...task, status: column.status as any }
+            : task
+        )
+      );
+
+      if (onTaskUpdate) {
         onTaskUpdate(taskId, { status: column.status as any });
       }
     }
@@ -73,7 +90,7 @@ const Kanban = ({ tasks, users, onTaskUpdate,onCreateTask }: KanbanProps) => {
         data={kanbanTasks}
         onDataChange={(updatedTasks) => {
           updatedTasks.forEach(updatedTask => {
-            const originalTask = tasks.find(task => task.id === updatedTask.id);
+            const originalTask = localTasks.find(task => task.id === updatedTask.id);
             if (originalTask && originalTask.status !== updatedTask.column) {
               handleTaskUpdate(updatedTask.id, updatedTask.column);
             }

@@ -7,7 +7,7 @@ import {
 } from '@/services/projects';
 import { getTasks } from '@/services/tasks';
 import { Project, Task, User } from "@prisma/client";
-import { fetchUsers } from "@/services/users";
+import { fetchCurrentUser } from "@/services/users";
 
 export function useProjects() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -22,21 +22,15 @@ export function useProjects() {
   const fetchProjectsData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [proj, task, allUsers] = await Promise.all([
+      const [proj, task, currentUser] = await Promise.all([
         getProjects(),
         getTasks(),
-        fetchUsers().catch(error => {
-          console.error("Error fetching users:", error);
-          return [];
-        })
+        fetchCurrentUser()
       ]);
 
       setProjects(proj);
       setTasks(task);
-      setUsers(allUsers);
-      console.log("Projects:", proj);
-      console.log("Tasks:", task);
-      console.log("Users:", allUsers);
+      setUsers(currentUser ? [currentUser] : []);
     } catch (error) {
       console.error(error);
       toast({

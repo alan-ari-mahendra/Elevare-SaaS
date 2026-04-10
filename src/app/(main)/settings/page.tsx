@@ -21,8 +21,6 @@ export default function SettingsPage() {
     const {theme, setTheme} = useTheme()
     const {user: sessionUser, isLoading, isAuthenticated} = useSessionUser()
     const {update} = useSession()
-    console.log("sessionUser di SettingsPage:", sessionUser)
-
     const [user, setUser] = useState({
         id: "",
         name: "",
@@ -67,7 +65,6 @@ export default function SettingsPage() {
                 timezone: data.user.timezone || "America/Los_Angeles",
                 language: data.user.language || "en"
             }))
-            console.log("User data:", data)
             toast.success('User data refreshed successfully!')
         } catch (error) {
             console.error('Error fetching user data:', error)
@@ -100,7 +97,6 @@ export default function SettingsPage() {
                     language: user.language,
                 }),
             })
-            console.log("Response profile:", response)
             if (!response.ok) {
                 throw new Error('Failed to update profile')
             }
@@ -126,8 +122,7 @@ export default function SettingsPage() {
 
     const handleSaveNotifications = async () => {
         try {
-            console.log("Saving notifications:", notifications)
-            toast.success('Notification settings saved!')
+            toast.success('Notification preferences saved locally.')
         } catch (error) {
             console.error('Error saving notifications:', error)
             toast.error('Failed to save notification settings.')
@@ -159,7 +154,7 @@ export default function SettingsPage() {
 
             const data = await response.json()
 
-            setUser(prev => ({ ...prev, avatar_url: data.avatarUrl }))
+            setUser(prev => ({ ...prev, avatarUrl: data.avatarUrl }))
 
             await update({ image: data.avatarUrl })
 
@@ -379,7 +374,7 @@ export default function SettingsPage() {
                             <Palette className="h-5 w-5 text-primary"/>
                             <CardTitle>Theme Preferences</CardTitle>
                         </div>
-                        <CardDescription>Choose how ProjectFlow looks and feels.</CardDescription>
+                        <CardDescription>Choose how Elevare looks and feels.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -506,13 +501,16 @@ export default function SettingsPage() {
                         <Separator/>
 
                         <div className="space-y-2">
-                            <Button variant="outline" className="w-full md:w-auto bg-transparent">
+                            <Button variant="outline" className="w-full md:w-auto bg-transparent"
+                                onClick={() => toast.info('Change password feature coming soon.')}>
                                 Change Password
                             </Button>
-                            <Button variant="outline" className="w-full md:w-auto bg-transparent">
+                            <Button variant="outline" className="w-full md:w-auto bg-transparent"
+                                onClick={() => toast.info('Data export feature coming soon.')}>
                                 Download Data
                             </Button>
-                            <Button variant="destructive" className="w-full md:w-auto">
+                            <Button variant="destructive" className="w-full md:w-auto"
+                                onClick={() => toast.error('Account deletion is not available yet.')}>
                                 Delete Account
                             </Button>
                         </div>

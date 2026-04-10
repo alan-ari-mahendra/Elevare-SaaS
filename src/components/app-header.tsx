@@ -22,13 +22,30 @@ import {
   Menu,
   ExternalLink,
 } from "lucide-react";
-import { mockUser } from "@/lib/mock-data";
 import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
+import {
+  userDisplayInitials,
+  userDisplayName,
+} from "@/lib/user-display";
 
 export function AppHeader() {
   const { toggleSidebar } = useSidebar();
+  const { data: session, status } = useSession();
+  const displayName =
+    status === "loading"
+      ? "…"
+      : userDisplayName(session?.user?.name, session?.user?.email);
+  const displayEmail =
+    status === "loading" ? "…" : session?.user?.email ?? "";
+  const profileImage = session?.user?.image?.trim();
+  const initials = userDisplayInitials(
+    session?.user?.name,
+    session?.user?.email
+  );
+
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -78,8 +95,7 @@ export function AppHeader() {
   }, [query]);
 
   const handleLogout = () => {
-    console.log("Logging out...");
-    window.location.href = "/login";
+    void signOut({ callbackUrl: "/login" });
   };
 
   return (
@@ -151,16 +167,10 @@ export function AppHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={mockUser.avatar_url || "/placeholder.svg"}
-                    alt={mockUser.name}
-                  />
-                  <AvatarFallback>
-                    {mockUser.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
+                  {profileImage ? (
+                    <AvatarImage src={profileImage} alt={displayName} />
+                  ) : null}
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -168,10 +178,10 @@ export function AppHeader() {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {mockUser.name}
+                    {displayName}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {mockUser.email}
+                    {displayEmail}
                   </p>
                 </div>
               </DropdownMenuLabel>

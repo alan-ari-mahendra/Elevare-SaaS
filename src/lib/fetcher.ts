@@ -3,7 +3,6 @@ export async function fetcher<T>(url: string): Promise<T> {
     method: "GET",
     credentials: "include"
   });
-
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   return res.json();
 }

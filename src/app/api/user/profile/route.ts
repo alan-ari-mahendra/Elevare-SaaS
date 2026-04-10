@@ -30,7 +30,6 @@ export async function GET(req: NextRequest) {
                 updatedAt: true,
             },
         });
-        console.log("User from api:", user);
         if (!user) {
             return NextResponse.json(
                 {error: "User not found"},
