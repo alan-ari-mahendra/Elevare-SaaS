@@ -43,7 +43,7 @@ export function TaskList({
     );
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-2">
             {tasks.length === 0 ? (
                 <Card className="border-border/50 rounded-lg border p-6">
                     <div className="flex flex-col items-center justify-center py-16">
@@ -67,7 +67,7 @@ export function TaskList({
                         items={tasks.map(task => task.id)}
                         strategy={verticalListSortingStrategy}
                     >
-                        <div className="space-y-4">
+                        <div className="space-y-2">
                             {tasks.map((task) => (
                                 <SortableTaskCard
                                     key={task.id}

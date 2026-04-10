@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -124,136 +124,122 @@ export default function TaskDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/tasks">Tasks</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator/>
-          <BreadcrumbItem>
-            <BreadcrumbPage>{task.title}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-3">
           <Link href="/tasks">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2"/>
-              Back to Tasks
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ArrowLeft className="h-4 w-4"/>
             </Button>
           </Link>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/tasks" className="text-muted-foreground/70">Tasks</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="text-muted-foreground/40"/>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{task.title}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={handleTaskDelete} disabled={isDeleting}>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleTaskDelete} disabled={isDeleting}>
             {isDeleting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin"/>
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin"/>
             ) : (
-              <Trash2 className="h-4 w-4 mr-2"/>
+              <Trash2 className="h-3.5 w-3.5 mr-1.5"/>
             )}
             Delete
           </Button>
-          <Button onClick={handleEditTask}>
-            <Edit3 className="h-4 w-4 mr-2"/>
-            Edit Task
+          <Button size="sm" onClick={handleEditTask}>
+            <Edit3 className="h-3.5 w-3.5 mr-1.5"/>
+            Edit
           </Button>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center space-x-3">
-                    {getStatusIcon(task.status)}
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">{task.title}</h1>
-                  </div>
+          <Card className="border-border/50">
+            <CardContent className="pt-6 space-y-5">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">{task.title}</h1>
+                <Badge
+                  variant={getStatusColor(task.status as Status)}
+                  className="text-[10px]"
+                >
+                  {task.status.replace("_", " ")}
+                </Badge>
+                <Badge
+                  variant={getPriorityColor(task.priority as Priority)}
+                  className="text-[10px]"
+                >
+                  {task.priority}
+                </Badge>
+              </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Badge
-                      variant={getStatusColor(task.status as Status)}
-                      className="text-xs"
-                    >
-                      {task.status.replace("_", " ")}
-                    </Badge>
-                    <Badge
-                      variant={getPriorityColor(task.priority as Priority)}
-                      className="text-xs"
-                    >
-                      {task.priority}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Description</h3>
-                <p className="text-muted-foreground">{task.description || "No description provided."}</p>
-              </div>
+              <p className="text-muted-foreground text-sm">{task.description || "No description provided."}</p>
 
               <Separator/>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Status</h3>
-                  <div className="flex items-center space-x-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
                     {getStatusIcon(task.status)}
-                    <span className="capitalize">{task.status.replace("_", " ")}</span>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Status</p>
+                    <p className="text-sm font-medium capitalize">{task.status.replace("_", " ")}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Priority</h3>
-                  <div className="flex items-center space-x-2">
-                    <Flag
-                      className={`h-4 w-4 ${
-                        task.priority === "high"
-                          ? "text-red-500"
-                          : task.priority === "medium"
-                            ? "text-yellow-500"
-                            : "text-blue-500"
-                      }`}
-                    />
-                    <span className="capitalize">{task.priority}</span>
+                <div className="flex items-center gap-3">
+                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+                    task.priority === "high" ? "bg-red-500/10" : task.priority === "medium" ? "bg-amber-500/10" : "bg-blue-500/10"
+                  }`}>
+                    <Flag className={`h-4 w-4 ${
+                      task.priority === "high" ? "text-red-500" : task.priority === "medium" ? "text-amber-500" : "text-blue-500"
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Priority</p>
+                    <p className="text-sm font-medium capitalize">{task.priority}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Due Date</h3>
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground"/>
-                    <span>
-                      {task.dueDate ? formatDateTime(task.dueDate) : "No due date set"}
-                    </span>
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Calendar className="h-4 w-4 text-primary"/>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Due Date</p>
+                    <p className="text-sm font-medium">
+                      {task.dueDate ? formatDateTime(task.dueDate) : "Not set"}
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Project</h3>
-                  <div className="flex items-center space-x-2">
-                    <FolderOpen className="h-4 w-4 text-muted-foreground"/>
-                    <span>{project?.name || "No project assigned"}</span>
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                    <FolderOpen className="h-4 w-4 text-violet-500"/>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Project</p>
+                    <p className="text-sm font-medium">{project?.name || "No project"}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Assignee</h3>
-                  <div className="flex items-center space-x-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={session?.user?.image || "/placeholder.svg"}
-                                   alt={session?.user?.name || ""}/>
-                      <AvatarFallback className="text-xs">
-                        {session?.user?.name
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("") || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{session?.user?.name || "Unknown"}</span>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={session?.user?.image || "/placeholder.svg"} alt={session?.user?.name || ""}/>
+                    <AvatarFallback className="text-xs">
+                      {session?.user?.name?.split(" ").map((n) => n[0]).join("") || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Assignee</p>
+                    <p className="text-sm font-medium">{session?.user?.name || "Unknown"}</p>
                   </div>
                 </div>
               </div>
@@ -261,66 +247,71 @@ export default function TaskDetailPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {project && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <FolderOpen className="h-5 w-5 text-primary"/>
-                  <span>Project</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <Link
-                    href={`/projects/${project.id}`}
-                    className="block hover:bg-muted/50 p-2 rounded-md transition-colors"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 rounded-full"
-                           style={{backgroundColor: project.color || "#6b7280"}}/>
-                      <div>
-                        <p className="font-medium">{project.name}</p>
-                        <p className="text-sm text-muted-foreground">{project.description}</p>
-                      </div>
+            <Card className="border-border/50">
+              <CardContent className="pt-4 pb-4 px-4">
+                <p className="text-[11px] text-muted-foreground mb-2">Project</p>
+                <Link
+                  href={`/projects/${project.id}`}
+                  className="block hover:bg-muted/50 p-2 -mx-2 rounded-md transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full shrink-0"
+                         style={{backgroundColor: project.color || "#6b7280"}}/>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{project.name}</p>
+                      {project.description && (
+                        <p className="text-xs text-muted-foreground truncate">{project.description}</p>
+                      )}
                     </div>
-                  </Link>
-                  <Badge
-                    className={getStatusColor(project.status)}>{project.status.replace("_", " ")}</Badge>
-                </div>
+                  </div>
+                </Link>
+                <Badge
+                  className={`mt-2 text-[10px] ${getStatusColor(project.status)}`}>{project.status.replace("_", " ")}</Badge>
               </CardContent>
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-primary"/>
-                <span>Timeline</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Created</span>
-                  <span>{formatDate(task.createdAt)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Last Updated</span>
-                  <span>{formatDate(task.updatedAt)}</span>
-                </div>
-                {task.dueDate && (
+          <Card className="border-border/50">
+            <CardContent className="pt-4 pb-4 px-4">
+              <p className="text-[11px] text-muted-foreground mb-3">Timeline</p>
+              <div className="relative pl-5 space-y-4">
+                <div className="absolute left-[5px] top-1 bottom-1 w-px bg-border" />
+
+                <div className="relative">
+                  <div className="absolute -left-5 top-1 h-2.5 w-2.5 rounded-full border-2 border-primary bg-background" />
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Due Date</span>
-                    <span
-                      className={
+                    <span className="text-muted-foreground">Created</span>
+                    <span className="text-xs">{formatDate(task.createdAt)}</span>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute -left-5 top-1 h-2.5 w-2.5 rounded-full border-2 border-muted-foreground/30 bg-background" />
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Updated</span>
+                    <span className="text-xs">{formatDate(task.updatedAt)}</span>
+                  </div>
+                </div>
+
+                {task.dueDate && (
+                  <div className="relative">
+                    <div className={`absolute -left-5 top-1 h-2.5 w-2.5 rounded-full border-2 bg-background ${
+                      new Date(task.dueDate) < new Date() && task.status !== "done"
+                        ? "border-red-500"
+                        : "border-muted-foreground/30"
+                    }`} />
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Due</span>
+                      <span className={`text-xs ${
                         new Date(task.dueDate) < new Date() && task.status !== "done"
                           ? "text-red-600 font-medium"
                           : ""
-                      }
-                    >
-                      {formatDate(task.dueDate)}
-                    </span>
+                      }`}>
+                        {formatDate(task.dueDate)}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

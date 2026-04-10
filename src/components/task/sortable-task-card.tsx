@@ -46,10 +46,10 @@ export function SortableTaskCard({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={`${isDragging ? "opacity-50" : ""}`}>
-      <Card className="border-border/50 hover:border-primary/50 transition-colors">
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
+    <div ref={setNodeRef} style={style} className={`group ${isDragging ? "opacity-50" : ""}`}>
+      <Card className="border-border/50 hover:border-primary/30 hover:shadow-md transition-all">
+        <CardContent className="px-4 py-3">
+          <div className="flex items-center gap-3">
             {isReorderMode ? (
               <div
                 className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
@@ -64,11 +64,11 @@ export function SortableTaskCard({
                 onCheckedChange={handleTaskStatusChange}
               />
             )}
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center space-x-2">
-                <Link href={`/tasks/${task.id}`} className="hover:underline">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <Link href={`/tasks/${task.id}`} className="hover:underline min-w-0">
                   <h3
-                    className={`font-semibold ${
+                    className={`font-semibold truncate ${
                       task.status === "done"
                         ? "line-through text-muted-foreground"
                         : "text-foreground"
@@ -79,38 +79,31 @@ export function SortableTaskCard({
                 </Link>
                 <Badge
                   variant={getPriorityColor(task.priority as Priority)}
-                  className="text-xs"
+                  className="text-[10px] shrink-0"
                 >
                   {task.priority}
                 </Badge>
-                <Badge variant={"completed"}>Position: {task.position || 0}</Badge>
                 <Badge
                   variant={getStatusColor(task.status as Status)}
-                  className="text-xs"
+                  className="text-[10px] shrink-0"
                 >
                   {task.status.replace("_", " ")}
                 </Badge>
               </div>
-              {task.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {task.description}
-                </p>
-              )}
-              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                <span>Updated {format(new Date(task.updatedAt), "MMM d")}</span>
+              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground/70">
                 {task.dueDate && (
-                  <>
-                    <span>•</span>
-                    <div className="flex items-center">
-                      <Calendar className="mr-1 h-3 w-3" />
-                      Due {format(new Date(task.dueDate), "MMM d")}
-                    </div>
-                  </>
+                  <div className="flex items-center">
+                    <Calendar className="mr-1 h-3 w-3" />
+                    Due {format(new Date(task.dueDate), "MMM d")}
+                  </div>
                 )}
+                <span>Updated {format(new Date(task.updatedAt), "MMM d")}</span>
               </div>
             </div>
             {!isReorderMode && (
-              <TaskActionDropdown task={task} onTaskEdit={onEdit} onTaskDelete={onDelete} />
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <TaskActionDropdown task={task} onTaskEdit={onEdit} onTaskDelete={onDelete} />
+              </div>
             )}
           </div>
         </CardContent>
