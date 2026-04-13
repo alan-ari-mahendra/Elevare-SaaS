@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Send, Trash2 } from "lucide-react";
@@ -41,98 +41,94 @@ export function CommentSection({ taskId }: CommentSectionProps) {
 
   return (
     <div className="w-full space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Comments</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Comment Input */}
-          <div className="space-y-4">
-            <div className="flex items-start space-x-4">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || ""} />
-                <AvatarFallback className="text-xs">
-                  {session?.user?.name
-                    ?.split(" ")
-                    .map((n) => n[0])
-                    .join("") || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-2">
-                <div className="border rounded-md overflow-hidden">
-                  <RichTextEditor
-                    onSerializedChange={(value) => {
-                      setEditorContent(JSON.stringify(value));
-                    }}
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    onClick={handleSubmitComment}
-                    disabled={isSubmitting || !editorContent.trim()}
-                    size="sm"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div
-                          className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        Posting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Post Comment
-                      </>
-                    )}
-                  </Button>
-                </div>
+      <Card className="border-border/50">
+        <CardContent className="pt-5 space-y-5">
+          <p className="text-sm font-medium">Comments</p>
+
+          <div className="flex items-start gap-3">
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || ""} />
+              <AvatarFallback className="text-xs">
+                {session?.user?.name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("") || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 space-y-2">
+              <div className="border rounded-md overflow-hidden">
+                <RichTextEditor
+                  onSerializedChange={(value) => {
+                    setEditorContent(JSON.stringify(value));
+                  }}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSubmitComment}
+                  disabled={isSubmitting || !editorContent.trim()}
+                  size="sm"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div
+                        className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Posting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Post
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </div>
 
           <Separator />
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             ) : comments.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-6 text-sm text-muted-foreground">
                 No comments yet. Be the first to comment!
               </div>
             ) : (
               comments.map((comment) => (
-                <div key={comment.id} className="flex items-start space-x-4">
-                  <Avatar className="h-8 w-8">
+                <div key={comment.id} className="group flex items-start gap-3">
+                  <Avatar className="h-7 w-7 shrink-0">
                     <AvatarImage src={comment.user.avatarUrl || ""} alt={comment.user.name || ""} />
-                    <AvatarFallback className="text-xs">
+                    <AvatarFallback className="text-[10px]">
                       {comment.user.name
                         ?.split(" ")
                         .map((n) => n[0])
                         .join("") || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{comment.user.name || "Unknown User"}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(comment.createdAt)}
-                        </span>
-                      </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{comment.user.name || "Unknown User"}</span>
+                      <span className="text-[11px] text-muted-foreground/70">
+                        {formatDate(comment.createdAt)}
+                      </span>
                       {session?.user?.id === comment.userId && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteComment(comment.id)}
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                          className="h-6 w-6 p-0 ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
-                    <LexicalView content={comment.content} />
+                    <div className="mt-1">
+                      <LexicalView content={comment.content} />
+                    </div>
                   </div>
                 </div>
               ))

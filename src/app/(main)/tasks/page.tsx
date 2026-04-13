@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useState, useEffect} from "react";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
@@ -15,6 +15,8 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
+    Filter,
+    ArrowUpDown,
 } from "lucide-react";
 import {useToast} from "@/hooks/use-toast";
 import {Task} from "@prisma/client";
@@ -319,119 +321,106 @@ export default function TasksPage() {
                 </Button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-4">
-                <Card className="border-border/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-                        <BarChart3 className="h-4 w-4 text-muted-foreground"/>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{tasks.length}</div>
-                    </CardContent>
-                </Card>
-                <Card className="border-border/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">To Do</CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground"/>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{todoTasks.length}</div>
-                    </CardContent>
-                </Card>
-                <Card className="border-border/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-                        <AlertCircle className="h-4 w-4 text-muted-foreground"/>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{inProgressTasks.length}</div>
-                    </CardContent>
-                </Card>
-                <Card className="border-border/50">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Completed</CardTitle>
-                        <CheckCircle2 className="h-4 w-4 text-muted-foreground"/>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{completedTasks.length}</div>
-                    </CardContent>
-                </Card>
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+                {[
+                    { label: "Total Tasks", value: tasks.length, icon: BarChart3, iconBg: "bg-primary/10", iconColor: "text-primary" },
+                    { label: "To Do", value: todoTasks.length, icon: Clock, iconBg: "bg-slate-500/10", iconColor: "text-slate-500" },
+                    { label: "In Progress", value: inProgressTasks.length, icon: AlertCircle, iconBg: "bg-amber-500/10", iconColor: "text-amber-500" },
+                    { label: "Completed", value: completedTasks.length, icon: CheckCircle2, iconBg: "bg-emerald-500/10", iconColor: "text-emerald-500" },
+                ].map((s, i) => {
+                    const Icon = s.icon;
+                    return (
+                        <Card key={i} className="border-border/50">
+                            <CardContent className="pt-4 pb-4 px-4">
+                                <div className="flex items-center gap-3">
+                                    <div className={`h-9 w-9 rounded-lg ${s.iconBg} flex items-center justify-center shrink-0`}>
+                                        <Icon className={`h-4 w-4 ${s.iconColor}`} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                                        <p className="text-lg font-bold leading-tight">{s.value}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
 
-            <Card className="border-border/50">
-                <CardContent className="p-6">
-                    <div className="flex flex-col space-y-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
-                            <Input
-                                placeholder="Search tasks..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-6">
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Status"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Status</SelectItem>
-                                    <SelectItem value="todo">To Do</SelectItem>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="done">Done</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Priority"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Priority</SelectItem>
-                                    <SelectItem value="high">High</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="low">Low</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select value={projectFilter} onValueChange={setProjectFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Projects"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Projects</SelectItem>
-                                    {projects.map((project) => (
-                                        <SelectItem key={project.id} value={project.id}>
-                                            {project.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select value={sortBy} onValueChange={setSortBy} disabled={isReorderMode}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sort by"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="position">Position</SelectItem>
-                                    <SelectItem value="updated">Last Updated</SelectItem>
-                                    <SelectItem value="created">Date Created</SelectItem>
-                                    <SelectItem value="dueDate">Due Date</SelectItem>
-                                    <SelectItem value="priority">Priority</SelectItem>
-                                    <SelectItem value="title">Title</SelectItem>
-                                    <SelectItem value="status">Status</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="reorder-mode"
-                                    checked={isReorderMode}
-                                    onCheckedChange={setIsReorderMode}
-                                />
-                                <Label htmlFor="reorder-mode">Reorder Mode</Label>
-                            </div>
-                        </div>
+            <div className="flex flex-col gap-3">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"/>
+                    <Input
+                        placeholder="Search tasks..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 h-9"
+                    />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full sm:w-[140px] h-9">
+                            <Filter className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                            <SelectValue placeholder="Status"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="todo">To Do</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="done">Done</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                        <SelectTrigger className="w-full sm:w-[140px] h-9">
+                            <Filter className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                            <SelectValue placeholder="Priority"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Priority</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select value={projectFilter} onValueChange={setProjectFilter}>
+                        <SelectTrigger className="w-full sm:w-[160px] h-9">
+                            <Filter className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                            <SelectValue placeholder="Project"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Projects</SelectItem>
+                            {projects.map((project) => (
+                                <SelectItem key={project.id} value={project.id}>
+                                    {project.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select value={sortBy} onValueChange={setSortBy} disabled={isReorderMode}>
+                        <SelectTrigger className="w-full sm:w-[150px] h-9">
+                            <ArrowUpDown className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                            <SelectValue placeholder="Sort by"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="position">Position</SelectItem>
+                            <SelectItem value="updated">Last Updated</SelectItem>
+                            <SelectItem value="created">Date Created</SelectItem>
+                            <SelectItem value="dueDate">Due Date</SelectItem>
+                            <SelectItem value="priority">Priority</SelectItem>
+                            <SelectItem value="title">Title</SelectItem>
+                            <SelectItem value="status">Status</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <div className="flex items-center space-x-2 ml-auto">
+                        <Switch
+                            id="reorder-mode"
+                            checked={isReorderMode}
+                            onCheckedChange={setIsReorderMode}
+                        />
+                        <Label htmlFor="reorder-mode" className="text-sm">Reorder</Label>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             <TaskList
                 tasks={filteredTasks}
