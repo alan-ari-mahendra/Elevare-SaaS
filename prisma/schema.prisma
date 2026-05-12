@@ -14,23 +14,50 @@ datasource db {
 }
 
 model User {
-  id         String     @id @default(cuid())
-  name       String?
-  email      String?    @unique
-  password   String?
-  avatarUrl  String?
-  bio        String?
-  location   String?
-  website    String?
-  company    String?
-  timezone   String?    @default("America/Los_Angeles")
-  language   String?    @default("en")
-  projects   Project[]
-  tasks      Task[]
-  activities Activity[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  Comment    Comment[]
+  id               String       @id @default(cuid())
+  name             String?
+  email            String?      @unique
+  password         String?
+  avatarUrl        String?
+  bio              String?
+  location         String?
+  website          String?
+  company          String?
+  timezone         String?      @default("America/Los_Angeles")
+  language         String?      @default("en")
+
+  projects         Project[]
+  tasks            Task[]
+  activities       Activity[]
+  comments         Comment[]
+
+  // Stripe
+  stripeCustomerId String?      @unique
+  subscription     Subscription?
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Subscription {
+  id                       String   @id @default(cuid())
+
+  // One-to-one relation
+  userId                   String   @unique
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeSubscriptionId     String?  @unique
+  stripePriceId            String?
+  stripeCurrentPeriodEnd   DateTime?
+
+  // free, pro, enterprise
+  plan                     String   @default("free")
+
+  // active, canceled, past_due
+  status                   String   @default("active")
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }
 
 model Project {

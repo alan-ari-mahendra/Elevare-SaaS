@@ -136,12 +136,14 @@ const testimonials = [
 
 const plans = [
   {
+    key: 'free',
     name: "Free",
     description: "For individuals & small side projects",
     monthlyPrice: 0,
     yearlyPrice: 0,
     popular: false,
     cta: "Get Started",
+    href: "/register",
     features: [
       "Up to 3 boards",
       "Up to 5 team members",
@@ -152,12 +154,14 @@ const plans = [
     ],
   },
   {
+    key: 'pro',
     name: "Pro",
     description: "For growing teams that need more power",
     monthlyPrice: 5,
     yearlyPrice: 4,
     popular: true,
     cta: "Start Free Trial",
+    href: "/login?redirect=/settings/billing",
     features: [
       "Unlimited boards",
       "Up to 25 team members",
@@ -170,12 +174,14 @@ const plans = [
     ],
   },
   {
+    key: 'enterprise',
     name: "Enterprise",
     description: "For organizations that need full control",
     monthlyPrice: 10,
     yearlyPrice: 8,
     popular: false,
     cta: "Contact Sales",
+    href: "/login?redirect=/settings/billing",
     features: [
       "Everything in Pro",
       "Unlimited team members",
@@ -498,13 +504,13 @@ export default function LandingPage() {
                   </CardContent>
 
                   <CardFooter>
-                    <Link href="/register" className="w-full">
+                    <Link href={plan.href} className="w-full">
                       <Button
-                        variant={plan.popular ? 'default' : 'secondary'}
+                        variant={plan.popular ? 'default' : 'outline'}
                         className={`w-full h-10 ${
                           plan.popular
                             ? 'bg-indigo-500 hover:bg-indigo-600 text-white'
-                            : 'border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 bg-indigo-100'
+                            : 'border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                         }`}
                       >
                         {plan.cta}

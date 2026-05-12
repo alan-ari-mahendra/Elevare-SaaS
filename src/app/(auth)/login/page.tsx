@@ -1,80 +1,73 @@
 "use client";
 
+import { Suspense } from "react";
 import type React from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-/** Kredensial admin praterisi untuk demo/showcase ke klien & tester. */
 const DEMO_ADMIN_EMAIL = "admin@gmail.com";
 const DEMO_ADMIN_PASSWORD = "password";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState(DEMO_ADMIN_EMAIL);
   const [password, setPassword] = useState(DEMO_ADMIN_PASSWORD);
-    const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const res = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-    });
-    console.log("38 res")
-    console.log(res)
-    setIsLoading(false);
+    try {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
 
-    if (res?.error) {
+      if (res?.error) {
+        toast({
+          title: "Login failed",
+          description: res.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Login successful",
+          description: "Welcome back to Elevare!",
+        });
+        const redirectTo = searchParams.get("redirect") || "/dashboard";
+        router.push(redirectTo);
+      }
+    } catch {
       toast({
         title: "Login failed",
-        description: res.error,
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Login successful",
-        description: "Welcome back to Elevare!",
-      });
-      router.push("/dashboard");
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleOAuthLogin = async (provider: "google" | "github") => {
-    await signIn(provider, { callbackUrl: "/dashboard" });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center space-x-2 mb-6"
-          >
+          <Link href="/" className="inline-flex items-center space-x-2 mb-6">
             <div className="h-8 w-8 rounded-lg bg-indigo-500 flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-slate-900">
-              Elevare
-            </span>
+            <span className="text-xl font-bold text-slate-900">Elevare</span>
           </Link>
           <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
           <p className="mt-2 text-sm text-slate-500">
@@ -123,8 +116,19 @@ export default function LoginPage() {
                   className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-indigo-500"
                 />
               </div>
-              <Button type="submit" className="w-full bg-indigo-500 hover:bg-indigo-600 text-white" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign in"}
+              <Button
+                type="submit"
+                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </Button>
             </form>
 
@@ -140,5 +144,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
