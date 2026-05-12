@@ -1,5 +1,16 @@
+'use client'
+
+import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card"
 import {
   ArrowRight,
   BarChart3,
@@ -7,6 +18,7 @@ import {
   Star,
   GripVertical,
   Quote,
+  Check,
 } from "lucide-react"
 import Link from "next/link"
 import { FeaturesGrid } from "@/components/features-grid"
@@ -122,9 +134,68 @@ const testimonials = [
   },
 ]
 
+const plans = [
+  {
+    name: "Free",
+    description: "For individuals & small side projects",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    popular: false,
+    cta: "Get Started",
+    features: [
+      "Up to 3 boards",
+      "Up to 5 team members",
+      "Basic task cards",
+      "Kanban view",
+      "100 MB file storage",
+      "Community support",
+    ],
+  },
+  {
+    name: "Pro",
+    description: "For growing teams that need more power",
+    monthlyPrice: 5,
+    yearlyPrice: 4,
+    popular: true,
+    cta: "Start Free Trial",
+    features: [
+      "Unlimited boards",
+      "Up to 25 team members",
+      "Subtasks & dependencies",
+      "Kanban, list & calendar views",
+      "5 GB file storage",
+      "Basic analytics & reports",
+      "Slack & email integrations",
+      "Priority email support",
+    ],
+  },
+  {
+    name: "Enterprise",
+    description: "For organizations that need full control",
+    monthlyPrice: 10,
+    yearlyPrice: 8,
+    popular: false,
+    cta: "Contact Sales",
+    features: [
+      "Everything in Pro",
+      "Unlimited team members",
+      "Custom fields & workflows",
+      "Advanced permissions & roles",
+      "SSO & SAML authentication",
+      "50 GB file storage",
+      "Advanced analytics & CSV exports",
+      "API access & webhooks",
+      "Dedicated account manager",
+      "99.9% SLA uptime guarantee",
+    ],
+  },
+]
+
 export default function LandingPage() {
+  const [yearly, setYearly] = useState(false)
+
   return (
-    <div className="min-h-screen bg-white light">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -141,6 +212,9 @@ export default function LandingPage() {
               </Link>
               <Link href="#features" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
                 Features
+              </Link>
+              <Link href="#pricing" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
+                Pricing
               </Link>
               <Link href="#testimonials" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
                 Testimonials
@@ -316,8 +390,137 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ 7. CTA — Final Push ═══ */}
-      <section className="py-20 sm:py-28 bg-white">
+      {/* ═══ 7. PRICING ═══ */}
+      <section id="pricing" className="py-20 sm:py-28 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-semibold text-indigo-500 uppercase tracking-wide">Pricing</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl text-balance">
+              Simple, transparent pricing
+            </h2>
+            <p className="mt-4 text-lg text-slate-500 text-pretty">
+              Start free, upgrade when you&apos;re ready. No hidden fees, no surprises.
+            </p>
+          </div>
+
+          {/* Monthly / Yearly toggle */}
+          <div className="flex items-center justify-center gap-3 mt-10">
+            <span
+              className={`text-sm font-medium transition-colors ${
+                !yearly ? 'text-slate-900' : 'text-slate-400'
+              }`}
+            >
+              Monthly
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={yearly}
+              onClick={() => setYearly(!yearly)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                yearly ? 'bg-indigo-500' : 'bg-slate-200'
+              }`}
+            >
+              <span
+                className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform ${
+                  yearly ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+            <span
+              className={`text-sm font-medium transition-colors ${
+                yearly ? 'text-slate-900' : 'text-slate-400'
+              }`}
+            >
+              Yearly
+            </span>
+            {yearly && (
+              <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-50">
+                Save 20%
+              </Badge>
+            )}
+          </div>
+
+          {/* Pricing cards */}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
+            {plans.map((plan) => {
+              const price = yearly ? plan.yearlyPrice : plan.monthlyPrice
+
+              return (
+                <Card
+                  key={plan.name}
+                  className={`relative flex flex-col bg-white ${
+                    plan.popular
+                      ? 'border-indigo-200 shadow-lg shadow-indigo-500/10 md:-mt-4 md:mb-[-16px]'
+                      : 'border-slate-200'
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-500 shadow-sm">
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
+
+                  <CardHeader>
+                    <CardTitle className="text-lg text-slate-900">{plan.name}</CardTitle>
+                    <CardDescription className='text-slate-900'>{plan.description}</CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="flex-1 flex flex-col">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold text-slate-900">${price}</span>
+                      {price > 0 && (
+                        <span className="text-sm text-slate-400">/month</span>
+                      )}
+                    </div>
+                    {yearly && price > 0 && (
+                      <p className="text-xs text-slate-400 mt-1">
+                        Billed ${price * 12}/year
+                      </p>
+                    )}
+                    {!yearly && price > 0 && (
+                      <p className="text-xs text-slate-400 mt-1">
+                        or ${plan.yearlyPrice * 12}/year
+                      </p>
+                    )}
+
+                    <ul className="mt-6 space-y-3 flex-1">
+                      {plan.features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-2.5">
+                          <Check className="h-4 w-4 text-indigo-500 mt-0.5 shrink-0" />
+                          <span className="text-sm text-slate-600">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+
+                  <CardFooter>
+                    <Link href="/register" className="w-full">
+                      <Button
+                        variant={plan.popular ? 'default' : 'secondary'}
+                        className={`w-full h-10 ${
+                          plan.popular
+                            ? 'bg-indigo-500 hover:bg-indigo-600 text-white'
+                            : 'border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 bg-indigo-100'
+                        }`}
+                      >
+                        {plan.cta}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ 8. CTA — Final Push ═══ */}
+      <section className="py-20 sm:py-28 bg-slate-50/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 px-6 py-16 sm:px-16 sm:py-20 text-center overflow-hidden">
             <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 h-[400px] w-[400px] rounded-full bg-white/10 blur-[2px]" />
@@ -358,6 +561,9 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-6">
             <Link href="#features" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
               Features
+            </Link>
+            <Link href="#pricing" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Pricing
             </Link>
             <Link href="#testimonials" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
               Testimonials
