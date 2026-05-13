@@ -2,6 +2,7 @@ export const PLANS = {
   free: {
     name: 'Free',
     price: 0,
+    yearlyPrice: 0,
     features: [
       'Up to 3 boards',
       'Up to 5 team members',
@@ -14,7 +15,9 @@ export const PLANS = {
   pro: {
     name: 'Pro',
     price: 5,
-    priceId: process.env.STRIPE_PRICE_PRO,
+    yearlyPrice: 4,
+    monthlyPriceId: process.env.STRIPE_PRICE_PRO_MONTHLY,
+    yearlyPriceId: process.env.STRIPE_PRICE_PRO_YEARLY,
     features: [
       'Unlimited boards',
       'Up to 25 team members',
@@ -29,7 +32,9 @@ export const PLANS = {
   enterprise: {
     name: 'Enterprise',
     price: 10,
-    priceId: process.env.STRIPE_PRICE_ENTERPRISE,
+    yearlyPrice: 8,
+    monthlyPriceId: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
+    yearlyPriceId: process.env.STRIPE_PRICE_ENTERPRISE_YEARLY,
     features: [
       'Everything in Pro',
       'Unlimited team members',

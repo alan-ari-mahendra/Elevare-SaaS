@@ -18,15 +18,18 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const plan = body.plan as PlanType
+    const interval = body.interval as 'monthly' | 'yearly'
 
     if (!plan || !paidPlans.includes(plan as PaidPlanType)) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
     const planConfig = PLANS[plan as PaidPlanType]
-    if (!planConfig.priceId) {
+    const priceId = interval === 'yearly' ? planConfig.yearlyPriceId : planConfig.monthlyPriceId
+
+    if (!priceId) {
       return NextResponse.json(
-        { error: 'Plan not configured' },
+        { error: 'Plan or interval not configured' },
         { status: 400 }
       )
     }
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: planConfig.priceId,
+          price: priceId,
           quantity: 1,
         },
       ],

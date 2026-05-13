@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -53,6 +54,8 @@ export function AppSidebar() {
     session?.user?.email
   );
 
+  const currentPlan = session?.user?.subscription?.plan || "free";
+
   const handleLogout = () => {
     void signOut({ callbackUrl: "/login" });
   };
@@ -78,7 +81,7 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.name}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href)}
                 className="w-full justify-start"
               >
                 <Link href={item.href} className="flex items-center space-x-3">
@@ -102,9 +105,17 @@ export function AppSidebar() {
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {displayName}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {displayName}
+                  </p>
+                  <Badge 
+                    variant={currentPlan === 'pro' ? 'default' : currentPlan === 'enterprise' ? 'secondary' : 'outline'}
+                    className="capitalize text-[10px] px-1.5 py-0 h-4"
+                  >
+                    {currentPlan}
+                  </Badge>
+                </div>
                 <p className="text-xs text-muted-foreground truncate">
                   {displayEmail}
                 </p>

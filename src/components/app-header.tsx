@@ -21,6 +21,7 @@ import {
   LogOut,
   Menu,
   ExternalLink,
+  CreditCard,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
@@ -46,11 +47,12 @@ export function AppHeader() {
     session?.user?.email
   );
 
+  const currentPlan = session?.user?.subscription?.plan || "free";
+
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // simpan AbortController biar bisa cancel request lama
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -59,9 +61,7 @@ export function AppHeader() {
       return;
     }
 
-    // bikin debounce 500ms
     const handler = setTimeout(async () => {
-      // cancel request sebelumnya kalau ada
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -119,7 +119,6 @@ export function AppHeader() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            {/* Result Dropdown */}
             {query && results.length > 0 && (
               <div className="absolute mt-1 w-64 rounded-md border bg-background shadow-lg">
                 {results.map((item) => (
@@ -144,7 +143,6 @@ export function AppHeader() {
               </div>
             )}
 
-            {/* Loading state */}
             {isLoading && (
               <div className="absolute mt-1 w-64 rounded-md border bg-background shadow-lg p-2 text-sm text-muted-foreground">
                 Loading...
@@ -177,9 +175,17 @@ export function AppHeader() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {displayName}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium leading-none">
+                      {displayName}
+                    </p>
+                    <Badge 
+                      variant={currentPlan === 'pro' ? 'default' : currentPlan === 'enterprise' ? 'secondary' : 'outline'}
+                      className="capitalize text-[10px] px-1.5 py-0 h-4"
+                    >
+                      {currentPlan}
+                    </Badge>
+                  </div>
                   <p className="text-xs leading-none text-muted-foreground">
                     {displayEmail}
                   </p>
@@ -190,6 +196,12 @@ export function AppHeader() {
                 <Link href="/settings/profile">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings/billing">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Billing</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

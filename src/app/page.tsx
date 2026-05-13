@@ -23,6 +23,7 @@ import {
 import Link from "next/link"
 import { FeaturesGrid } from "@/components/features-grid"
 import { PainPointsCarousel } from "@/components/pain-points-carousel"
+import { useSession } from "next-auth/react"
 
 function MockKanban() {
   const columns = [
@@ -143,7 +144,6 @@ const plans = [
     yearlyPrice: 0,
     popular: false,
     cta: "Get Started",
-    href: "/register",
     features: [
       "Up to 3 boards",
       "Up to 5 team members",
@@ -161,7 +161,6 @@ const plans = [
     yearlyPrice: 4,
     popular: true,
     cta: "Start Free Trial",
-    href: "/login?redirect=/settings/billing",
     features: [
       "Unlimited boards",
       "Up to 25 team members",
@@ -181,7 +180,6 @@ const plans = [
     yearlyPrice: 8,
     popular: false,
     cta: "Contact Sales",
-    href: "/login?redirect=/settings/billing",
     features: [
       "Everything in Pro",
       "Unlimited team members",
@@ -199,6 +197,8 @@ const plans = [
 
 export default function LandingPage() {
   const [yearly, setYearly] = useState(false)
+  const { data: session } = useSession()
+  const isLoggedIn = !!session
 
   return (
     <div className="min-h-screen bg-white">
@@ -227,16 +227,26 @@ export default function LandingPage() {
               </Link>
             </nav>
             <div className="flex items-center space-x-2">
-              <Link href="/login">
-                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button size="sm" className="bg-indigo-500 hover:bg-indigo-600 text-white">
-                  Get Started
-                </Button>
-              </Link>
+              {isLoggedIn ? (
+                <Link href="/dashboard">
+                  <Button size="sm" className="bg-indigo-500 hover:bg-indigo-600 text-white">
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button size="sm" className="bg-indigo-500 hover:bg-indigo-600 text-white">
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -261,9 +271,9 @@ export default function LandingPage() {
               Missed deadlines, lost tasks, endless status meetings. You&apos;ve been there. There&apos;s a better way to keep your team on track.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-4">
-              <Link href="/register">
+              <Link href={isLoggedIn ? "/dashboard" : "/register"}>
                 <Button size="lg" className="h-12 px-8 bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/25">
-                  Try Elevare free
+                  {isLoggedIn ? "Go to Dashboard" : "Try Elevare free"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -453,6 +463,11 @@ export default function LandingPage() {
             {plans.map((plan) => {
               const price = yearly ? plan.yearlyPrice : plan.monthlyPrice
 
+              // Logic redirect CTA
+              const ctaHref = plan.key === 'free' 
+                ? (isLoggedIn ? '/dashboard' : '/register')
+                : (isLoggedIn ? `/settings/billing?interval=${yearly ? 'yearly' : 'monthly'}` : '/register')
+
               return (
                 <Card
                   key={plan.name}
@@ -504,7 +519,7 @@ export default function LandingPage() {
                   </CardContent>
 
                   <CardFooter>
-                    <Link href={plan.href} className="w-full">
+                    <Link href={ctaHref} className="w-full">
                       <Button
                         variant={plan.popular ? 'default' : 'outline'}
                         className={`w-full h-10 ${
@@ -513,7 +528,7 @@ export default function LandingPage() {
                             : 'border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                         }`}
                       >
-                        {plan.cta}
+                        {isLoggedIn && plan.key !== 'free' ? 'Manage Plan' : plan.cta}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>
@@ -539,9 +554,9 @@ export default function LandingPage() {
               Free to use, no credit card required. See the difference in your first week.
             </p>
             <div className="relative mt-8">
-              <Link href="/register">
+              <Link href={isLoggedIn ? "/dashboard" : "/register"}>
                 <Button size="lg" className="h-12 px-10 bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg">
-                  Get Started for Free
+                  {isLoggedIn ? "Go to Dashboard" : "Get Started for Free"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
